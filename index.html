@@ -502,7 +502,7 @@
         btn.style.color = '#fff';
         setTimeout(() => { window.location.href = 'app.html'; }, 500);
       } catch (err) {
-        document.getElementById('login-error-text').textContent = 'Credenciales. Usa botones inferiores para demo.';
+        document.getElementById('login-error-text').textContent = err.message || 'Error de conexión';
         errorEl.classList.add('show');
         btn.innerHTML = 'Iniciar Sesión';
         btn.style.opacity = '1';

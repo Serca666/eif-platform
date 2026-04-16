@@ -141,9 +141,6 @@ const Store = {
     { id: 'u11', nombre: 'Facundo Díaz', email: 'facundo.diaz@empresa.com', rol: 'colaborador', nivel_jerarquico: 1, sucursal_id: 's3', region_id: 'r2', avatar: null, created_at: '2026-03-15', password: 'demo' },
     { id: 'u12', nombre: 'Julieta Moreno', email: 'julieta.moreno@empresa.com', rol: 'gerente_regional', nivel_jerarquico: 4, sucursal_id: null, region_id: 'r2', avatar: null, created_at: '2025-03-01', password: 'demo' },
   ],
- id: 'u11', nombre: 'Facundo Díaz', email: 'facundo.diaz@empresa.com', rol: 'colaborador', nivel_jerarquico: 1, sucursal_id: 's3', region_id: 'r2', avatar: null, created_at: '2026-03-15' },
-    { id: 'u12', nombre: 'Julieta Moreno', email: 'julieta.moreno@empresa.com', rol: 'gerente_regional', nivel_jerarquico: 4, sucursal_id: null, region_id: 'r2', avatar: null, created_at: '2025-03-01' },
-  ],
 
   // ── Regiones y Sucursales ────────────────────────────
   regions: [
