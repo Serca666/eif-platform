@@ -124,24 +124,24 @@ const Store = {
     window.location.reload();
   },
 
-  // ═════════════════════════════════════════════════════
-  //  DATOS MOCK COMPLETOS (Limpios y en UTF-8)
-  // ═════════════════════════════════════════════════════
-
-  // ── Usuarios / Perfiles ──────────────────────────────
+  // ════════════════  // ── Usuarios / Perfiles ──────────────────────────────
   users: [
-    { id: 'u0', nombre: 'Admin EIF', email: 'admin@eif.com', rol: 'admin', nivel_jerarquico: 5, sucursal_id: 's1', region_id: 'r1', avatar: null, created_at: '2026-01-01' },
-    { id: 'u1', nombre: 'Martín García', email: 'martin.garcia@empresa.com', rol: 'admin', nivel_jerarquico: 5, sucursal_id: 's1', region_id: 'r1', avatar: null, created_at: '2025-01-15' },
-    { id: 'u2', nombre: 'Carolina Méndez', email: 'carolina.mendez@empresa.com', rol: 'gerente_regional', nivel_jerarquico: 4, sucursal_id: null, region_id: 'r1', avatar: null, created_at: '2025-02-01' },
-    { id: 'u3', nombre: 'Roberto Fernández', email: 'roberto.fernandez@empresa.com', rol: 'gerente_sucursal', nivel_jerarquico: 3, sucursal_id: 's1', region_id: 'r1', avatar: null, created_at: '2025-03-10' },
-    { id: 'u4', nombre: 'Lucía Torres', email: 'lucia.torres@empresa.com', rol: 'capacitador', nivel_jerarquico: 2, sucursal_id: 's1', region_id: 'r1', avatar: null, created_at: '2025-04-01' },
-    { id: 'u5', nombre: 'Diego Ramírez', email: 'diego.ramirez@empresa.com', rol: 'colaborador', nivel_jerarquico: 1, sucursal_id: 's1', region_id: 'r1', avatar: null, created_at: '2026-01-10' },
-    { id: 'u6', nombre: 'Ana Belén Soto', email: 'anabelen.soto@empresa.com', rol: 'colaborador', nivel_jerarquico: 1, sucursal_id: 's1', region_id: 'r1', avatar: null, created_at: '2026-02-15' },
-    { id: 'u7', nombre: 'Sergio Valdez', email: 'sergio.valdez@empresa.com', rol: 'evaluador_ms', nivel_jerarquico: 2, sucursal_id: null, region_id: 'r1', avatar: null, created_at: '2025-06-01' },
-    { id: 'u8', nombre: 'Valentina Ruiz', email: 'valentina.ruiz@empresa.com', rol: 'colaborador', nivel_jerarquico: 1, sucursal_id: 's2', region_id: 'r1', avatar: null, created_at: '2026-03-01' },
-    { id: 'u9', nombre: 'Matías López', email: 'matias.lopez@empresa.com', rol: 'colaborador', nivel_jerarquico: 1, sucursal_id: 's2', region_id: 'r1', avatar: null, created_at: '2026-03-05' },
-    { id: 'u10', nombre: 'Camila Herrera', email: 'camila.herrera@empresa.com', rol: 'gerente_sucursal', nivel_jerarquico: 3, sucursal_id: 's2', region_id: 'r1', avatar: null, created_at: '2025-05-20' },
-    { id: 'u11', nombre: 'Facundo Díaz', email: 'facundo.diaz@empresa.com', rol: 'colaborador', nivel_jerarquico: 1, sucursal_id: 's3', region_id: 'r2', avatar: null, created_at: '2026-03-15' },
+    { id: 'u-sergio', nombre: 'Sergio Canavese', email: 'scanavese@megatlon.com.ar', rol: 'admin', nivel_jerarquico: 5, password: 'Ateneo165', created_at: '2026-04-16' },
+    { id: 'u0', nombre: 'Admin EIF', email: 'admin@eif.com', rol: 'admin', nivel_jerarquico: 5, sucursal_id: 's1', region_id: 'r1', avatar: null, created_at: '2026-01-01', password: 'demo' },
+    { id: 'u1', nombre: 'Martín García', email: 'martin.garcia@empresa.com', rol: 'admin', nivel_jerarquico: 5, sucursal_id: 's1', region_id: 'r1', avatar: null, created_at: '2025-01-15', password: 'demo' },
+    { id: 'u2', nombre: 'Carolina Méndez', email: 'carolina.mendez@empresa.com', rol: 'gerente_regional', nivel_jerarquico: 4, sucursal_id: null, region_id: 'r1', avatar: null, created_at: '2025-02-01', password: 'demo' },
+    { id: 'u3', nombre: 'Roberto Fernández', email: 'roberto.fernandez@empresa.com', rol: 'gerente_sucursal', nivel_jerarquico: 3, sucursal_id: 's1', region_id: 'r1', avatar: null, created_at: '2025-03-10', password: 'demo' },
+    { id: 'u4', nombre: 'Lucía Torres', email: 'lucia.torres@empresa.com', rol: 'capacitador', nivel_jerarquico: 2, sucursal_id: 's1', region_id: 'r1', avatar: null, created_at: '2025-04-01', password: 'demo' },
+    { id: 'u5', nombre: 'Diego Ramírez', email: 'diego.ramirez@empresa.com', rol: 'colaborador', nivel_jerarquico: 1, sucursal_id: 's1', region_id: 'r1', avatar: null, created_at: '2026-01-10', password: 'demo' },
+    { id: 'u6', nombre: 'Ana Belén Soto', email: 'anabelen.soto@empresa.com', rol: 'colaborador', nivel_jerarquico: 1, sucursal_id: 's1', region_id: 'r1', avatar: null, created_at: '2026-02-15', password: 'demo' },
+    { id: 'u7', nombre: 'Sergio Valdez', email: 'sergio.valdez@empresa.com', rol: 'evaluador_ms', nivel_jerarquico: 2, sucursal_id: null, region_id: 'r1', avatar: null, created_at: '2025-06-01', password: 'demo' },
+    { id: 'u8', nombre: 'Valentina Ruiz', email: 'valentina.ruiz@empresa.com', rol: 'colaborador', nivel_jerarquico: 1, sucursal_id: 's2', region_id: 'r1', avatar: null, created_at: '2026-03-01', password: 'demo' },
+    { id: 'u9', nombre: 'Matías López', email: 'matias.lopez@empresa.com', rol: 'colaborador', nivel_jerarquico: 1, sucursal_id: 's2', region_id: 'r1', avatar: null, created_at: '2026-03-05', password: 'demo' },
+    { id: 'u10', nombre: 'Camila Herrera', email: 'camila.herrera@empresa.com', rol: 'gerente_sucursal', nivel_jerarquico: 3, sucursal_id: 's2', region_id: 'r1', avatar: null, created_at: '2025-05-20', password: 'demo' },
+    { id: 'u11', nombre: 'Facundo Díaz', email: 'facundo.diaz@empresa.com', rol: 'colaborador', nivel_jerarquico: 1, sucursal_id: 's3', region_id: 'r2', avatar: null, created_at: '2026-03-15', password: 'demo' },
+    { id: 'u12', nombre: 'Julieta Moreno', email: 'julieta.moreno@empresa.com', rol: 'gerente_regional', nivel_jerarquico: 4, sucursal_id: null, region_id: 'r2', avatar: null, created_at: '2025-03-01', password: 'demo' },
+  ],
+ id: 'u11', nombre: 'Facundo Díaz', email: 'facundo.diaz@empresa.com', rol: 'colaborador', nivel_jerarquico: 1, sucursal_id: 's3', region_id: 'r2', avatar: null, created_at: '2026-03-15' },
     { id: 'u12', nombre: 'Julieta Moreno', email: 'julieta.moreno@empresa.com', rol: 'gerente_regional', nivel_jerarquico: 4, sucursal_id: null, region_id: 'r2', avatar: null, created_at: '2025-03-01' },
   ],
 

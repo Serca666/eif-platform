@@ -47,12 +47,15 @@ const Auth = {
       return new Promise((resolve, reject) => {
         setTimeout(() => {
           const user = Store.users.find(u => u.email === email);
-          if (user) {
+          
+          // Validación de contraseña en modo Mock
+          if (user && user.password === password) {
             this.currentUser = user;
             this._saveSession(user);
             resolve(user);
           } else {
-            reject(new Error('Credenciales inválidas (Modo Demo)'));
+            console.warn('❌ Intento de login fallido para:', email);
+            reject(new Error('Credenciales inválidas (Email o Contraseña incorrectos)'));
           }
         }, 800);
       });
