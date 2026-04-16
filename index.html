@@ -389,8 +389,12 @@
           </div>
 
           <!-- Omitimos el checkbox para hacerlo idéntico al diseño minimalista -->
-          <button type="submit" class="btn-create" id="login-submit">
+          <button type="submit" class="btn-create" id="login-submit" style="margin-bottom: 12px;">
             Iniciar Sesión
+          </button>
+
+          <button type="button" class="btn-create" onclick="handleBypass()" style="background-color: #10B981; color: #fff;">
+            🚀 ENTRAR DIRECTAMENTE (SIN CLAVE)
           </button>
         </form>
 
@@ -457,6 +461,17 @@
         btn.innerHTML = 'Iniciar Sesión';
         btn.style.opacity = '1';
         btn.disabled = false;
+      }
+    }
+
+    async function handleBypass() {
+      try {
+        const btn = event.target;
+        btn.innerHTML = 'Accediendo...';
+        await Auth.quickLogin('admin');
+        window.location.href = 'app.html';
+      } catch (err) {
+        alert('Error al entrar: ' + err.message);
       }
     }
 
