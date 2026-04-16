@@ -28,6 +28,13 @@ const Store = {
 
   // ── Persistencia Híbrida (Supabase + LocalStorage) ──
   async initStorage() {
+    // Force clear for v1.2 updates (Access Fix)
+    if (localStorage.getItem('eif_db_version') !== '1.2') {
+      localStorage.removeItem('eif_db');
+      localStorage.setItem('eif_db_version', '1.2');
+      console.log('🔄 Cache del sistema actualizada a v1.2');
+    }
+
     this.setState({ loading: true });
     
     // 1. Intentar sincronización con Supabase (Prioridad Alta)

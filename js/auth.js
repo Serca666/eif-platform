@@ -8,11 +8,12 @@ const Auth = {
   // Login de Usuario (Híbrido)
   async login(email, password) {
     let supabaseError = null;
+    const cleanEmail = email.trim().toLowerCase();
 
     // 1. Intentar con Supabase si está disponible
     if (window.db) {
       try {
-        const { data: authData, error: authError } = await window.db.auth.signInWithPassword({ email, password });
+        const { data: authData, error: authError } = await window.db.auth.signInWithPassword({ email: cleanEmail, password });
         if (authError) throw authError;
 
         const { data: profile, error: profError } = await window.db
@@ -35,7 +36,7 @@ const Auth = {
     // 2. Fallback a Mock (Si Supabase no está o si falló la autenticación allí)
     return new Promise((resolve, reject) => {
       setTimeout(() => {
-        const user = Store.users.find(u => u.email === email);
+        const user = Store.users.find(u => u.email.trim().toLowerCase() === cleanEmail);
         
         if (user && user.password === password) {
           console.log('✅ Acceso concedido vía modo Demo/Mock');
@@ -43,7 +44,7 @@ const Auth = {
           this._saveSession(user);
           resolve(user);
         } else {
-          console.error('❌ Error de autenticación final:', email);
+          console.error('❌ Error de autenticación final:', cleanEmail);
           reject(supabaseError || new Error('Email o contraseña incorrectos.'));
         }
       }, 600);
@@ -79,7 +80,6 @@ const Auth = {
           window.db.auth.getSession().then(({ data }) => {
             if (!data.session) {
               console.warn('⚠️ Sesión de Supabase expirada o inválida.');
-              // Opcional: Cerrar sesión local si la de Supabase no es válida
             }
           });
         }
