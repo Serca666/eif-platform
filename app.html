@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="EIF Platform — Ecosistema Integrado de Formación">
+  <meta name="theme-color" content="#0B0F1A">
+  <title>EIF Platform</title>
+  <link rel="manifest" href="manifest.json">
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/animations.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="css/onboarding.css">
+  <link rel="stylesheet" href="css/elearning.css">
+  <link rel="stylesheet" href="css/evaluations.css">
+  <link rel="stylesheet" href="css/mystery.css">
+</head>
+<body>
+
+  <div class="app-layout" id="app-layout">
+    <!-- ═══ SIDEBAR ═══ -->
+    <nav class="sidebar" id="sidebar">
+      <button class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()">
+        <span class="icon" style="width:14px;height:14px;display:inline-flex">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </span>
+      </button>
+
+      <div class="sidebar-brand">
+        <div class="sidebar-brand-logo">EIF</div>
+        <div class="sidebar-brand-text">
+          <span class="sidebar-brand-name">EIF Platform</span>
+          <span class="sidebar-brand-version">v1.0</span>
+        </div>
+      </div>
+
+      <div class="sidebar-nav" id="sidebar-nav">
+        <!-- Se llena dinámicamente según el rol -->
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="sidebar-user" id="sidebar-user" onclick="toggleUserMenu()">
+          <div class="avatar avatar-sm" id="sidebar-avatar"></div>
+          <div class="sidebar-user-info">
+            <div class="sidebar-user-name" id="sidebar-user-name"></div>
+            <div class="sidebar-user-role" id="sidebar-user-role"></div>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- ═══ MAIN ═══ -->
+    <main class="app-main">
+      <!-- Header -->
+      <header class="app-header">
+        <div class="header-left">
+          <button class="btn btn-ghost btn-icon" id="mobile-menu-btn" style="display:none" onclick="toggleMobileSidebar()">
+            <span class="icon" style="width:20px;height:20px;display:inline-flex">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </span>
+          </button>
+          <div class="header-title">
+            <h1 class="header-page-title" id="header-page-title">Dashboard</h1>
+          </div>
+        </div>
+        <div class="header-right">
+          <div class="header-search">
+            <span class="header-search-icon">
+              <span class="icon" style="width:16px;height:16px;display:inline-flex">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              </span>
+            </span>
+            <input type="text" class="header-search-input" placeholder="Buscar..." id="header-search">
+          </div>
+
+          <div class="dropdown" id="notif-dropdown">
+            <button class="header-notification-btn" onclick="toggleDropdown('notif-dropdown')">
+              <span class="icon" style="width:20px;height:20px;display:inline-flex">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+              </span>
+              <span class="notification-dot" id="notif-dot"></span>
+            </button>
+            <div class="dropdown-menu" style="min-width:340px;right:0">
+              <div style="padding:12px 16px;border-bottom:1px solid var(--border-subtle)">
+                <span class="font-semibold text-sm">Notificaciones</span>
+              </div>
+              <div id="notif-list" style="max-height:300px;overflow-y:auto"></div>
+            </div>
+          </div>
+
+          <div class="dropdown" id="user-dropdown">
+            <button class="flex items-center gap-2 cursor-pointer" onclick="toggleDropdown('user-dropdown')" style="padding: 4px 8px; border-radius: 8px;">
+              <div class="avatar avatar-sm" id="header-avatar"></div>
+              <span class="text-sm font-medium" id="header-user-name" style="color:var(--text-primary)"></span>
+            </button>
+            <div class="dropdown-menu">
+              <div class="dropdown-item" onclick="Router.navigate('records')">
+                <span class="icon" style="width:16px;height:16px;display:inline-flex"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>
+                Mi Legajo
+              </div>
+              <div class="dropdown-item" onclick="Router.navigate('settings')">
+                <span class="icon" style="width:16px;height:16px;display:inline-flex"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+                Configuración
+              </div>
+              <div class="dropdown-divider"></div>
+              <div class="dropdown-item danger" onclick="Auth.logout()">
+                <span class="icon" style="width:16px;height:16px;display:inline-flex"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></span>
+                Cerrar sesión
+              </div>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Content -->
+      <div class="app-content" id="app-content">
+        <div class="flex items-center justify-center min-h-screen">
+          <div class="spinner"></div>
+        </div>
+      </div>
+    </main>
+
+    <!-- ═══ MOBILE NAV ═══ -->
+    <nav class="mobile-nav">
+      <div class="mobile-nav-items" id="mobile-nav-items">
+        <!-- Se llena dinámicamente -->
+      </div>
+    </nav>
+  </div>
+
+  <!-- ═══ MODAL CONTAINER ═══ -->
+  <div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)closeModal()">
+    <div class="modal" id="modal-container">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modal-title"></h3>
+        <button class="modal-close" onclick="closeModal()">✕</button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+      <div class="modal-footer" id="modal-footer"></div>
+    </div>
+  </div>
+
+  <!-- ═══ SCRIPTS ═══ -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <!-- Plugin para exportación de Ebooks a PDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  
+  <script src="js/config.js"></script>
+  <script src="js/supabaseClient.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/components/toast.js"></script>
+  <script src="js/router.js"></script>
+  <script src="js/pages/dashboard.js"></script>
+  <script src="js/pages/onboarding.js"></script>
+  <script src="js/pages/elearning.js"></script>
+  <script src="js/pages/evaluations.js"></script>
+  <script src="js/pages/mystery.js"></script>
+  <script src="js/pages/records.js"></script>
+  <script src="js/pages/users.js"></script>
+  <script src="js/pages/settings.js"></script>
+
+  <script>
+    // ═══════════════════════════════════════════════════
+    //  INICIALIZACIÓN DE LA APLICACIÓN
+    // ═══════════════════════════════════════════════════
+
+    (async function init() {
+      // 1. Verificar autenticación básica (Local)
+      let user = Auth.restoreSession();
+      if (!user) {
+        window.location.href = 'index.html';
+        return;
+      }
+
+      // 2. Inicializar Almacenamiento (Sincronización Supabase)
+      await Store.initStorage();
+      
+      // Actualizar el usuario actual si Supabase tiene datos más recientes
+      user = Auth.currentUser || user;
+
+      // 3. Configurar UI según el rol
+      setupSidebar(user);
+      setupHeader(user);
+      setupMobileNav(user);
+      setupNotifications();
+
+      // 3. Registrar rutas
+      Router.register('dashboard', renderDashboard);
+      Router.register('onboarding', renderOnboarding);
+      Router.register('elearning', renderElearning);
+      Router.register('evaluations', renderEvaluations);
+      Router.register('mystery', renderMystery);
+      Router.register('records', renderRecords);
+      Router.register('users', renderUsers);
+      Router.register('settings', renderSettings);
+
+      // 4. Iniciar router
+      Router.init();
+
+      // 5. Responsive check
+      handleResize();
+      window.addEventListener('resize', handleResize);
+
+      // 6. Click fuera para cerrar dropdowns
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('.dropdown')) {
+          document.querySelectorAll('.dropdown.active').forEach(d => d.classList.remove('active'));
+        }
+      });
+    })();
+
+    // ── Sidebar Setup ──────────────────────────────────
+    function setupSidebar(user) {
+      const nav = document.getElementById('sidebar-nav');
+      const allowedPages = EIF_CONFIG.NAV_BY_ROLE[user.rol] || [];
+
+      const sections = [
+        {
+          title: 'Principal',
+          items: [
+            { page: 'dashboard', icon: 'dashboard', label: 'Dashboard' }
+          ]
+        },
+        {
+          title: 'Formación',
+          items: [
+            { page: 'onboarding', icon: 'onboarding', label: 'Onboarding' },
+            { page: 'elearning', icon: 'elearning', label: 'Capacitación' },
+            { page: 'evaluations', icon: 'evaluations', label: 'Evaluaciones' }
+          ]
+        },
+        {
+          title: 'Evaluación',
+          items: [
+            { page: 'mystery', icon: 'mystery', label: 'Mystery Shopper' },
+            { page: 'records', icon: 'records', label: 'Legajo Digital' }
+          ]
+        },
+        {
+          title: 'Administración',
+          items: [
+            { page: 'users', icon: 'users', label: 'Usuarios' },
+            { page: 'settings', icon: 'settings', label: 'Configuración' }
+          ]
+        }
+      ];
+
+      let html = '';
+      sections.forEach(section => {
+        const visibleItems = section.items.filter(item => allowedPages.includes(item.page));
+        if (visibleItems.length === 0) return;
+
+        html += `<div class="sidebar-section">
+          <div class="sidebar-section-title">${section.title}</div>`;
+
+        visibleItems.forEach(item => {
+          const badge = item.page === 'evaluations' ? '<span class="sidebar-link-badge">1</span>' : '';
+          html += `
+            <div class="sidebar-link" data-page="${item.page}" onclick="Router.navigate('${item.page}')">
+              <span class="sidebar-link-icon">${icon(item.icon, 20)}</span>
+              <span class="sidebar-link-text">${item.label}</span>
+              ${badge}
+            </div>
+          `;
+        });
+
+        html += '</div>';
+      });
+
+      nav.innerHTML = html;
+
+      // User info
+      document.getElementById('sidebar-avatar').textContent = Auth.getInitials(user.nombre);
+      document.getElementById('sidebar-user-name').textContent = user.nombre;
+      document.getElementById('sidebar-user-role').textContent = EIF_CONFIG.ROLE_LABELS[user.rol] || user.rol;
+    }
+
+    // ── Header Setup ───────────────────────────────────
+    function setupHeader(user) {
+      document.getElementById('header-avatar').textContent = Auth.getInitials(user.nombre);
+      document.getElementById('header-user-name').textContent = user.nombre.split(' ')[0];
+    }
+
+    // ── Mobile Nav Setup ───────────────────────────────
+    function setupMobileNav(user) {
+      const container = document.getElementById('mobile-nav-items');
+      const allowedPages = EIF_CONFIG.NAV_BY_ROLE[user.rol] || [];
+      const mobileItems = ['dashboard', 'elearning', 'evaluations', 'records'].filter(p => allowedPages.includes(p));
+
+      const labels = {
+        dashboard: 'Inicio', elearning: 'Cursos', evaluations: 'Exámenes',
+        mystery: 'Mystery', records: 'Legajo', onboarding: 'Onboarding'
+      };
+
+      let html = '';
+      mobileItems.slice(0, 5).forEach(page => {
+        html += `
+          <div class="mobile-nav-item" data-page="${page}" onclick="Router.navigate('${page}')">
+            <span class="mobile-nav-item-icon">${icon(page, 22)}</span>
+            ${labels[page] || page}
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    // ── Notifications Setup ────────────────────────────
+    function setupNotifications() {
+      const list = document.getElementById('notif-list');
+      const dot = document.getElementById('notif-dot');
+      const unread = Store.mockNotifications.filter(n => !n.read);
+
+      dot.style.display = unread.length > 0 ? '' : 'none';
+
+      let html = '';
+      Store.mockNotifications.forEach(n => {
+        html += `
+          <div class="dropdown-item" style="white-space:normal;align-items:flex-start;${n.read ? 'opacity:0.6' : ''}" onclick="Toast.show('${n.title}', '${n.message}', '${n.type}')">
+            <span style="font-size:16px;margin-top:2px">${n.type === 'info' ? 'ℹ️' : n.type === 'warning' ? '⚠️' : '✅'}</span>
+            <div style="flex:1">
+              <div class="font-semibold text-sm">${n.title}</div>
+              <div class="text-xs text-tertiary mt-1">${n.message}</div>
+              <div class="text-xs text-disabled mt-1">${n.time}</div>
+            </div>
+            ${!n.read ? '<span class="notification-dot" style="position:static;width:8px;height:8px;border:none"></span>' : ''}
+          </div>
+        `;
+      });
+
+      if (Store.mockNotifications.length === 0) {
+        html = '<div class="empty-state p-6"><div class="empty-state-text">Sin notificaciones</div></div>';
+      }
+
+      list.innerHTML = html;
+    }
+
+    // ── Toggle Functions ───────────────────────────────
+    function toggleSidebar() {
+      const layout = document.getElementById('app-layout');
+      layout.classList.toggle('sidebar-collapsed');
+      const toggle = document.getElementById('sidebar-toggle');
+      toggle.innerHTML = layout.classList.contains('sidebar-collapsed')
+        ? '<span class="icon" style="width:14px;height:14px;display:inline-flex"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg></span>'
+        : '<span class="icon" style="width:14px;height:14px;display:inline-flex"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg></span>';
+    }
+
+    function toggleMobileSidebar() {
+      document.getElementById('sidebar').classList.toggle('mobile-open');
+    }
+
+    function toggleDropdown(id) {
+      const el = document.getElementById(id);
+      document.querySelectorAll('.dropdown.active').forEach(d => {
+        if (d.id !== id) d.classList.remove('active');
+      });
+      el.classList.toggle('active');
+    }
+
+    function toggleUserMenu() {
+      toggleDropdown('user-dropdown');
+    }
+
+    // ── Modal Functions ────────────────────────────────
+    function showModal(title, bodyHtml, onConfirm, confirmText = 'Confirmar') {
+      document.getElementById('modal-title').textContent = title;
+      document.getElementById('modal-body').innerHTML = bodyHtml;
+
+      const footer = document.getElementById('modal-footer');
+      if (onConfirm) {
+        footer.innerHTML = `
+          <button class="btn btn-outline" onclick="closeModal()">Cancelar</button>
+          <button class="btn btn-primary" id="modal-confirm">${confirmText}</button>
+        `;
+        document.getElementById('modal-confirm').addEventListener('click', onConfirm);
+      } else {
+        footer.innerHTML = `<button class="btn btn-outline" onclick="closeModal()">Cerrar</button>`;
+      }
+
+      document.getElementById('modal-overlay').classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('modal-overlay').classList.remove('active');
+    }
+
+    // ── Responsive ─────────────────────────────────────
+    function handleResize() {
+      const isMobile = window.innerWidth <= 768;
+      document.getElementById('mobile-menu-btn').style.display = isMobile ? '' : 'none';
+
+      if (isMobile) {
+        document.getElementById('sidebar').classList.remove('mobile-open');
+      }
+    }
+  </script>
+</body>
+</html>

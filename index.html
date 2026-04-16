@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="EIF Platform — Iniciar Sesión">
+  <meta name="theme-color" content="#121212">
+  <title>EIF Platform — Iniciar Sesión</title>
+  <link rel="manifest" href="manifest.json">
+
+  <!-- Core CSS -->
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/animations.css">
+
+  <style>
+    /* Diseño Split-Screen (Inspirado en la referencia aportada) */
+    :root {
+      --login-bg-left: #161618;
+      --login-bg-right: #0B0F1A;
+      --input-bg: transparent;
+      --input-border: #333333;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: var(--login-bg-left);
+      height: 100vh;
+      overflow: hidden;
+      font-family: var(--font-sans);
+    }
+
+    .split-layout {
+      display: flex;
+      height: 100vh;
+      width: 100%;
+    }
+
+    /* ── LADO IZQUIERDO (Formulario) ── */
+    .split-left {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      background-color: var(--login-bg-left);
+      padding: var(--space-8);
+      max-width: 50%;
+    }
+
+    .brand-header {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      position: absolute;
+      top: var(--space-8);
+      left: var(--space-8);
+    }
+
+    .brand-icon {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 4px;
+      background-color: #fff;
+      color: var(--login-bg-left);
+      font-weight: 800;
+      font-size: 14px;
+    }
+
+    .brand-text {
+      font-weight: 700;
+      font-size: 18px;
+      color: #fff;
+    }
+
+    .form-container {
+      margin: auto;
+      width: 100%;
+      max-width: 360px;
+    }
+
+    .login-heading {
+      text-align: center;
+      margin-bottom: var(--space-1);
+    }
+
+    .login-title {
+      font-size: 24px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: var(--space-2);
+    }
+
+    .login-subtitle {
+      font-size: 14px;
+      color: var(--text-tertiary);
+      margin-bottom: var(--space-8);
+    }
+
+    /* Estilos de input estilo "Untitled UI" */
+    .retro-input {
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: 8px;
+      color: white;
+      padding: 12px 14px;
+      width: 100%;
+      font-size: 14px;
+      transition: border-color 0.2s;
+    }
+    
+    .retro-input:focus {
+      outline: none;
+      border-color: #555;
+    }
+
+    .retro-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      color: #ccc;
+      margin-bottom: 6px;
+    }
+
+    .login-form .form-group {
+      margin-bottom: 20px;
+    }
+
+    .btn-create {
+      background-color: #fff;
+      color: #000;
+      border: none;
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: background-color 0.2s;
+    }
+
+    .btn-create:hover {
+      background-color: #e5e5e5;
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      text-align: center;
+      margin: 24px 0;
+      color: #555;
+      font-size: 13px;
+    }
+    
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      border-bottom: 1px solid #333;
+    }
+    
+    .divider:not(:empty)::before { margin-right: .5em; }
+    .divider:not(:empty)::after { margin-left: .5em; }
+
+    .social-logins {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .btn-social {
+      flex: 1;
+      background: #1E1E20;
+      border: 1px solid #333;
+      color: #fff;
+      height: 44px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+
+    .btn-social:hover {
+      background: #2A2A2C;
+    }
+
+    .quick-login-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .demo-hint {
+      text-align: center;
+      font-size: 12px;
+      color: #666;
+      margin-top: 24px;
+    }
+
+    .demo-hint a {
+      color: #fff;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .login-error {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      color: var(--color-danger-400);
+      padding: var(--space-3) var(--space-4);
+      border-radius: 8px;
+      font-size: var(--text-sm);
+      margin-bottom: var(--space-4);
+      display: none;
+      align-items: center;
+      gap: var(--space-2);
+    }
+    .login-error.show { display: flex; }
+
+    /* ── LADO DERECHO (Imagen/Arte) ── */
+    .split-right {
+      flex: 1;
+      padding: 16px 16px 16px 0;
+      background-color: var(--login-bg-left);
+      display: flex;
+    }
+
+    .right-image-container {
+      flex: 1;
+      border-radius: 24px;
+      background: url('https://images.unsplash.com/photo-1541701494587-cb58502866ab?q=80&w=2670&auto=format&fit=crop') no-repeat center center;
+      background-size: cover;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      box-shadow: inset 0 0 100px rgba(0,0,0,0.5);
+    }
+
+    .right-image-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.6) 100%);
+    }
+
+    .right-content {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      color: white;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    .right-title {
+      font-size: 32px;
+      font-weight: 600;
+      margin-bottom: 40px;
+      letter-spacing: -0.02em;
+    }
+
+    /* Mockup UI Panel sobre la imagen (como en el diseño) */
+    .mockup-panel {
+      background: rgba(20, 20, 22, 0.85);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 24px;
+      text-align: left;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.4);
+    }
+
+    .mockup-search {
+      background: rgba(0,0,0,0.5);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 6px;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      color: #888;
+      font-size: 13px;
+      margin-bottom: 20px;
+    }
+
+    .mockup-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .mockup-item:last-child { border-bottom: none; }
+
+    .mockup-item-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .mockup-avatar {
+      width: 32px;
+      height: 32px;
+      background: #333;
+      border-radius: 4px;
+      font-size: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #999;
+    }
+
+    .mockup-text-main { font-size: 14px; color: #fff; font-weight: 500; }
+    .mockup-text-sub { font-size: 12px; color: #666; }
+
+    /* Toggle pill style */
+    .mockup-toggle {
+      width: 36px;
+      height: 20px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 100px;
+      position: relative;
+    }
+    .mockup-toggle.active { background: #10B981; }
+    .mockup-toggle::after {
+      content: '';
+      position: absolute;
+      width: 16px; height: 16px;
+      background: #fff;
+      border-radius: 50%;
+      top: 2px;
+      transition: 0.2s;
+    }
+    .mockup-toggle:not(.active)::after { left: 2px; }
+    .mockup-toggle.active::after { right: 2px; }
+
+    /* Responsividad */
+    @media (max-width: 900px) {
+      .split-layout { flex-direction: column; }
+      .split-left { max-width: 100%; justify-content: center; padding: 24px; }
+      .brand-header { position: relative; top: 0; left: 0; margin-bottom: 40px; justify-content: center;}
+      .split-right { display: none; } /* Ocultar imagen en móvil */
+    }
+  </style>
+</head>
+<body>
+
+  <div class="split-layout">
+    
+    <!-- LADO IZQUIERDO -->
+    <div class="split-left">
+      <div class="brand-header">
+        <div class="brand-icon">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="brand-text">EIF Platform</div>
+      </div>
+
+      <div class="form-container">
+        <div class="login-heading animate-fade-in-up">
+          <h1 class="login-title">Iniciá sesión en tu cuenta</h1>
+          <p class="login-subtitle">Gestión de aprendizaje y evaluación operativa.</p>
+        </div>
+
+        <div id="login-error" class="login-error">
+          ⚠️ <span id="login-error-text">Credenciales inválidas</span>
+        </div>
+
+        <form class="login-form animate-fade-in-up" id="login-form" onsubmit="handleLogin(event)" style="animation-delay: 100ms;">
+          <div class="form-group">
+            <label class="retro-label" for="login-email">Email</label>
+            <input type="email" id="login-email" class="retro-input" placeholder="Ingresá tu email" required autocomplete="email">
+          </div>
+
+          <div class="form-group">
+            <label class="retro-label" for="login-password">Contraseña</label>
+            <input type="password" id="login-password" class="retro-input" placeholder="Creá o ingresá una contraseña" required autocomplete="current-password">
+          </div>
+
+          <!-- Omitimos el checkbox para hacerlo idéntico al diseño minimalista -->
+          <button type="submit" class="btn-create" id="login-submit">
+            Iniciar Sesión
+          </button>
+        </form>
+
+        <div class="divider animate-fade-in-up" style="animation-delay: 200ms;">o acceso rápido demo</div>
+
+        <!-- Botones visuales de acceso rápido en vez de sociales -->
+        <div class="social-logins animate-fade-in-up" style="animation-delay: 300ms;">
+          <button class="btn-social" onclick="quickLogin('admin')" title="Admin">👑</button>
+          <button class="btn-social" onclick="quickLogin('gerente_sucursal')" title="Gerente">🏪</button>
+          <button class="btn-social" onclick="quickLogin('capacitador')" title="Capacitador">📚</button>
+          <button class="btn-social" onclick="quickLogin('colaborador')" title="Colaborador">👤</button>
+        </div>
+
+        <div class="demo-hint animate-fade-in-up" style="animation-delay: 400ms;">
+          ¿Problemas para acceder? <a href="#">Contactar soporte</a>
+        </div>
+      </div>
+    </div>
+
+    <!-- LADO DERECHO -->
+    <div class="split-right">
+      <div class="right-image-container animate-fade-in">
+        <div class="right-image-overlay"></div>
+        
+        <div class="right-content">
+          <h2 class="right-title">Formación corporativa.<br>Perfeccionada.</h2>
+          
+          <div class="mockup-panel">
+            <div class="mockup-search">
+              🔍 Buscar módulos de aprendizaje...
+            </div>
+            
+            <div class="mockup-item">
+              <div class="mockup-item-left">
+                <div class="mockup-avatar" style="background:#5522AA; color:white">AC</div>
+                <div>
+                  <div class="mockup-text-main">Atención al Cliente</div>
+                  <div class="mockup-text-sub">Módulo activo · 15 niveles</div>
+                </div>
+              </div>
+              <div class="mockup-toggle active"></div>
+            </div>
+
+            <div class="mockup-item">
+              <div class="mockup-item-left">
+                <div class="mockup-avatar" style="background:#228855; color:white">PV</div>
+                <div>
+                  <div class="mockup-text-main">Protocolo de Ventas</div>
+                  <div class="mockup-text-sub">Módulo activo · 8 niveles</div>
+                </div>
+              </div>
+              <div class="mockup-toggle active"></div>
+            </div>
+
+            <div class="mockup-item">
+              <div class="mockup-item-left">
+                <div class="mockup-avatar">SH</div>
+                <div>
+                  <div class="mockup-text-main">Seguridad e Higiene</div>
+                  <div class="mockup-text-sub">Borrador · 10 niveles</div>
+                </div>
+              </div>
+              <div class="mockup-toggle"></div>
+            </div>
+
+            <div class="mockup-item">
+              <div class="mockup-item-left">
+                <div class="mockup-avatar">MS</div>
+                <div>
+                  <div class="mockup-text-main">Mystery Shopper</div>
+                  <div class="mockup-text-sub">Configuración de Criterios</div>
+                </div>
+              </div>
+              <div class="mockup-toggle"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+  </div>
+
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+  <script src="js/config.js"></script>
+  <script src="js/supabaseClient.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/auth.js"></script>
+
+  <script>
+    const existingUser = Auth.restoreSession();
+    if (existingUser) { window.location.href = 'app.html'; }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
+      const btn = document.getElementById('login-submit');
+      const errorEl = document.getElementById('login-error');
+
+      btn.innerHTML = 'Ingresando...';
+      btn.style.opacity = '0.7';
+      btn.disabled = true;
+      errorEl.classList.remove('show');
+
+      try {
+        await Auth.login(email, password);
+        btn.innerHTML = '¡Bienvenido!';
+        btn.style.background = '#10B981';
+        btn.style.color = '#fff';
+        setTimeout(() => { window.location.href = 'app.html'; }, 500);
+      } catch (err) {
+        document.getElementById('login-error-text').textContent = 'Credenciales. Usa botones inferiores para demo.';
+        errorEl.classList.add('show');
+        btn.innerHTML = 'Iniciar Sesión';
+        btn.style.opacity = '1';
+        btn.disabled = false;
+      }
+    }
+
+    async function quickLogin(role) {
+      try {
+        const btns = document.querySelectorAll('.btn-social');
+        btns.forEach(b => b.style.pointerEvents = 'none');
+        await Auth.quickLogin(role);
+        window.location.href = 'app.html';
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,19 @@
+{
+  "name": "EIF Platform",
+  "short_name": "EIF",
+  "description": "Ecosistema Integrado de Formación — Plataforma de gestión de aprendizaje y evaluación operativa",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0B0F1A",
+  "theme_color": "#6366F1",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%236366F1'/><text x='50' y='65' font-family='Inter,sans-serif' font-size='40' font-weight='800' fill='white' text-anchor='middle'>EIF</text></svg>",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "categories": ["education", "business"],
+  "lang": "es"
+}
