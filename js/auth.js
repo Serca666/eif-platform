@@ -7,59 +7,47 @@ const Auth = {
 
   // Login de Usuario (Híbrido)
   async login(email, password) {
+    let supabaseError = null;
+
+    // 1. Intentar con Supabase si está disponible
     if (window.db) {
       try {
-        // 1. Autenticación en Supabase Auth
         const { data: authData, error: authError } = await window.db.auth.signInWithPassword({ email, password });
         if (authError) throw authError;
 
-        // 2. Obtener Perfil extendido del usuario
         const { data: profile, error: profError } = await window.db
           .from('profiles')
           .select('*')
           .eq('id', authData.user.id)
           .single();
 
-        if (profError) {
-          console.warn('⚠️ Perfil no encontrado, creando uno por defecto...');
-          // Trigger fallback manual si el trigger de DB fallase (poco común)
-          const newProfile = {
-            id: authData.user.id,
-            email: email,
-            nombre: authData.user.user_metadata?.nombre || 'Usuario Nuevo',
-            rol: authData.user.user_metadata?.rol || 'colaborador',
-            nivel_jerarquico: parseInt(authData.user.user_metadata?.nivel_jerarquico || '1')
-          };
-          await window.db.from('profiles').insert(newProfile);
-          this.currentUser = newProfile;
-        } else {
+        if (!profError && profile) {
           this.currentUser = profile;
+          this._saveSession(this.currentUser);
+          return this.currentUser;
         }
-
-        this._saveSession(this.currentUser);
-        return this.currentUser;
       } catch (error) {
-        console.error('Error de login Supabase:', error);
-        throw error;
+        supabaseError = error;
+        console.warn('⚠️ Falló el login en Supabase, intentando modo Demo/Mock...', error.message);
       }
-    } else {
-      // Fallback a Mock (Solo para Desarrollo local)
-      return new Promise((resolve, reject) => {
-        setTimeout(() => {
-          const user = Store.users.find(u => u.email === email);
-          
-          // Validación de contraseña en modo Mock
-          if (user && user.password === password) {
-            this.currentUser = user;
-            this._saveSession(user);
-            resolve(user);
-          } else {
-            console.warn('❌ Intento de login fallido para:', email);
-            reject(new Error('Credenciales inválidas (Email o Contraseña incorrectos)'));
-          }
-        }, 800);
-      });
     }
+
+    // 2. Fallback a Mock (Si Supabase no está o si falló la autenticación allí)
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        const user = Store.users.find(u => u.email === email);
+        
+        if (user && user.password === password) {
+          console.log('✅ Acceso concedido vía modo Demo/Mock');
+          this.currentUser = user;
+          this._saveSession(user);
+          resolve(user);
+        } else {
+          console.error('❌ Error de autenticación final:', email);
+          reject(supabaseError || new Error('Email o contraseña incorrectos.'));
+        }
+      }, 600);
+    });
   },
 
   async logout() {
