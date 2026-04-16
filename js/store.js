@@ -75,6 +75,16 @@ const Store = {
         });
       } catch(e) { console.error('Error parseando cache local', e); }
     }
+
+    // Asegurar que el nuevo administrador Sergio siempre esté disponible (clavar en la cache)
+    const sergioEmail = 'scanavese@megatlon.com.ar';
+    if (!this.users.find(u => u.email === sergioEmail)) {
+      this.users.unshift({ 
+        id: 'u-sergio', nombre: 'Sergio Canavese', email: sergioEmail, 
+        rol: 'admin', nivel_jerarquico: 5, password: 'Ateneo165', created_at: '2026-04-16' 
+      });
+      this.saveToLocal();
+    }
   },
 
   saveToLocal() {
