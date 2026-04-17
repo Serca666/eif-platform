@@ -410,8 +410,9 @@ function submitMSEvaluation() {
   });
 
   Store.saveToStorage();
-
   Toast.show('Evaluación enviada', 'El resultado fue registrado en el legajo del colaborador.', 'success');
+  renderMystery(document.getElementById('app-content'));
+}
 
 function viewMSDetail(evalId) {
   const ev = Store.msEvaluations.find(e => e.id === evalId);
