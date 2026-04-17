@@ -334,12 +334,12 @@
   border-top: 1px solid var(--border-subtle);
 }
 
-/* ── Question Bank (Admin) ─────────────────────────────── */
-.question-bank-item {
+/* ── Case Bank (Admin) ─────────────────────────────────── */
+.case-bank-item {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: var(--space-4);
-  padding: var(--space-5);
+  padding: var(--space-4);
   background: var(--surface-card);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-xl);
@@ -347,42 +347,51 @@
   transition: all var(--transition-fast);
 }
 
-.question-bank-item:hover {
-  border-color: var(--border-default);
+.case-bank-item:hover {
+  border-color: var(--color-primary-500);
+  background: rgba(99, 102, 241, 0.03);
 }
 
-.question-bank-number {
-  width: 36px;
-  height: 36px;
+.case-bank-preview {
+  width: 80px;
+  height: 60px;
   border-radius: var(--radius-lg);
   background: var(--surface-input);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: var(--text-sm);
-  font-weight: var(--weight-bold);
   color: var(--text-tertiary);
+  overflow: hidden;
   flex-shrink: 0;
+  border: 1px solid var(--border-subtle);
 }
 
-.question-bank-content { flex: 1; }
-
-.question-bank-text {
-  font-size: var(--text-sm);
-  font-weight: var(--weight-medium);
-  color: var(--text-primary);
-  margin-bottom: var(--space-2);
-}
-
-.question-bank-meta {
+.case-bank-actions {
   display: flex;
-  align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-1);
 }
 
-.question-bank-actions {
-  display: flex;
-  gap: var(--space-2);
+/* ── Situational Exam Styles ───────────────────────────── */
+.exam-case-image-container {
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+  background: black;
+  margin-bottom: var(--space-6);
+}
+
+.exam-case-image {
+  width: 100%;
+  max-height: 350px;
+  object-fit: contain;
+  display: block;
+}
+
+#ai-variants-loader .spinner {
+  width: 24px;
+  height: 24px;
+  border-width: 2px;
+  border-top-color: var(--color-primary-500);
 }
 
 /* ── Link Generation ───────────────────────────────────── */

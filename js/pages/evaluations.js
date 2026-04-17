@@ -13,11 +13,11 @@ function renderEvaluations(container) {
     <div class="page-header">
       <div>
         <h2 class="page-title">Evaluaciones</h2>
-        <p class="page-description">${isAdmin ? 'Gestión de evaluaciones y banco de preguntas' : 'Tus evaluaciones asignadas'}</p>
+        <p class="page-description">${isAdmin ? 'Gestión de casos situacionales y simulaciones' : 'Tus evaluaciones asignadas'}</p>
       </div>
       ${isAdmin ? `
       <div class="page-actions">
-        <button class="btn btn-outline" onclick="showQuestionBank()">${icon('elearning', 16)} Banco de Preguntas</button>
+        <button class="btn btn-outline" onclick="showCaseBank()">${icon('records', 16)} Banco de Casos (PBi)</button>
         <button class="btn btn-primary" onclick="showGenerateLink()">${icon('link', 16)} Generar Enlace</button>
       </div>` : ''}
     </div>
@@ -70,14 +70,20 @@ function renderEvaluations(container) {
 async function startExam(moduleId) {
   const container = document.getElementById('app-content');
   const m = Store.getModuleById(moduleId);
+  
+  // Buscar si hay un caso relacionado en el banco de casos (por título o keyword)
+  const relatedCase = Store.caseBank.find(c => 
+    c.titulo.toLowerCase().includes(m.titulo.toLowerCase().split(' ')[0]) || 
+    m.descripcion.toLowerCase().includes(c.titulo.toLowerCase())
+  ) || Store.caseBank[0]; // Fallback al primer caso si no hay match
 
   // Pantalla de carga IA
   container.innerHTML = `
     <div class="flex items-center justify-center min-h-screen text-center animate-fade-in">
       <div>
         <div class="spinner mb-4" style="border-width:3px; border-top-color:var(--color-primary-500); width:48px; height:48px;"></div>
-        <h3 class="text-xl font-bold mb-2">Generando Evaluación...</h3>
-        <p class="text-sm text-tertiary">Nuestra IA está analizando el módulo y diseñando preguntas exclusivas.</p>
+        <h3 class="text-xl font-bold mb-2">Generando Evaluación Situacional...</h3>
+        <p class="text-sm text-tertiary">Analizando el tablero "${relatedCase?.titulo || 'General'}" para diseñar tu desafío.</p>
       </div>
     </div>
   `;
@@ -87,49 +93,47 @@ async function startExam(moduleId) {
 
   try {
     if (apiKey && apiKey.length > 10) {
-      // Usar Google Gemini API Real
-      // Usar Google Gemini API Real con un prompt optimizado
-      const prompt = `Actúa como un experto en capacitación corporativa para Megatlon (cadena de gimnasios líder). 
-Tu tarea es generar un examen de 5 preguntas de opción múltiple de alta calidad sobre el módulo: "${m?.titulo}".
-Descripción del tema: ${m?.descripcion}.
+      const base64Content = relatedCase?.imagen_url ? relatedCase.imagen_url.split(',')[1] : null;
 
-Instrucciones críticas:
-1. Las preguntas deben ser situacionales y profesionales.
-2. Devuelve ÚNICAMENTE un array JSON puro. Sin explicaciones, sin markdown (no incluyas \`\`\`json).
-3. Formato requerido:
-[{"id":"q1","tipo":"single","dificultad":"media","enunciado":"¿...?","opciones":["A","B","C","D"],"respuesta_correcta":0}]
+      const prompt = `Actúa como un experto en capacitación para Megatlon. 
+Estamos evaluando el módulo: "${m?.titulo}".
+Contexto Situacional (CASO): ${relatedCase?.titulo}.
+Descripción del Caso: ${relatedCase?.descripcion}.
 
-Genera las preguntas ahora:`;
+Tu tarea: Generar exactamente 5 preguntas de opción múltiple de alta complejidad sobre cómo resolver esta situación o interpretar los datos del tablero.
+Instrucciones:
+1. Las preguntas deben ser CRÍTICAS y DECISIONALES.
+2. Devuelve ÚNICAMENTE un array JSON puro. Sin explicaciones ni markdown.
+3. Formato requerido: [{"id":"q1","tipo":"single","dificultad":"alta","enunciado":"¿...?","opciones":["A","B","C","D"],"respuesta_correcta":0}]`;
+
+      const parts = [{ text: prompt }];
+      if (base64Content) {
+        parts.push({ inline_data: { mime_type: "image/jpeg", data: base64Content } });
+      }
 
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+        body: JSON.stringify({ contents: [{ parts }] })
       });
 
       const data = await response.json();
       if (data.candidates && data.candidates[0].content.parts[0].text) {
         let textResponse = data.candidates[0].content.parts[0].text;
-        // Limpiar posible markdown si la IA ignora las instrucciones
         const cleanJson = textResponse.replace(/```json/g, '').replace(/```/g, '').replace(/^JSON/i, '').trim();
         generatedQuestions = JSON.parse(cleanJson);
       } else {
-        throw new Error("Respuesta de IA vacía o inválida");
+        throw new Error("Respuesta de IA vacía");
       }
     } else {
-      // Fallback: Generador Mock Aleatorio "Estilo IA"
-      await new Promise(r => setTimeout(r, 2000));
-      const verbos = ['Analizar', 'Comprender', 'Identificar', 'Resolver', 'Supervisar'];
-      const sustantivos = ['la situación', 'el protocolo', 'la norma', 'la consulta', 'el conflicto'];
-
+      // Fallback: Generador Mock Aleatorio (Si no hay IA)
+      await new Promise(r => setTimeout(r, 1500));
       for (let i = 0; i < 5; i++) {
         generatedQuestions.push({
-          id: 'ai_q_' + i,
-          tipo: 'single',
-          dificultad: 'media',
-          enunciado: `Pregunta Dinámica ${i + 1} generada: Al ${verbos[Math.floor(Math.random() * verbos.length)].toLowerCase()} ${sustantivos[Math.floor(Math.random() * sustantivos.length)]} en el marco de ${m?.titulo || 'este módulo'}, ¿qué paso se debe priorizar?`,
-          opciones: ['Priorizar la agilidad del proceso', 'Consultar el manual de procedimientos', 'Ignorar la directriz general', 'Delegar inmediatamente al supervisor'],
-          respuesta_correcta: 1
+          id: 'ai_q_' + i, tipo: 'single', dificultad: 'media',
+          enunciado: `Pregunta de Simulación ${i + 1}: Sobre el caso "${relatedCase?.titulo}", ¿cuál es el impacto principal en los KPIs?`,
+          opciones: ['Impacto Negativo en Retención', 'Mejora en la satisfacción', 'Neutral', 'Requiere más datos'],
+          respuesta_correcta: 0
         });
       }
     }
@@ -138,7 +142,13 @@ Genera las preguntas ahora:`;
     generatedQuestions = Store.getQuestionsForModule(moduleId, 5);
   }
 
-  currentExam = { moduleId, questions: generatedQuestions, answers: {}, startTime: Date.now() };
+  currentExam = { 
+    moduleId, 
+    questions: generatedQuestions, 
+    answers: {}, 
+    startTime: Date.now(),
+    caseData: relatedCase // Guardamos el caso para mostrar la imagen en el examen
+  };
   currentQuestionIndex = 0;
 
   setTimeout(() => renderExamQuestion(), 500);
@@ -172,6 +182,14 @@ function renderExamQuestion() {
 
       <div class="question-card">
         <div class="question-number">${icon('evaluations', 14)} Pregunta ${currentQuestionIndex + 1}</div>
+        
+        ${exam.caseData && exam.caseData.imagen_url ? `
+          <div class="exam-case-image-container mb-4">
+            <p class="text-xs font-bold text-tertiary mb-2 uppercase">Análisis de Tablero: ${exam.caseData.titulo}</p>
+            <img src="${exam.caseData.imagen_url}" class="exam-case-image">
+          </div>
+        ` : ''}
+
         <p class="question-text">${q.enunciado || 'Pregunta sin enunciado'}</p>
   `;
 
@@ -360,45 +378,203 @@ function showExamResults(score, correct, total, passed, exam) {
   `;
 }
 
-function showQuestionBank() {
+// ── Banco de Casos (Admin) ──
+function showCaseBank() {
   const container = document.getElementById('app-content');
   let html = `
     <div class="flex items-center gap-3 mb-6">
       <button class="btn btn-ghost btn-icon" onclick="renderEvaluations(document.getElementById('app-content'))">${icon('chevronLeft', 20)}</button>
       <div>
-        <h2 class="page-title">Banco de Preguntas</h2>
-        <p class="page-description">${Store.questionBank.length} preguntas en total</p>
+        <h2 class="page-title">Banco de Casos Situacionales</h2>
+        <p class="page-description">${Store.caseBank.length} escenarios cargados</p>
       </div>
       <div class="flex-1"></div>
-      <button class="btn btn-primary" onclick="Toast.show('Pregunta', 'Formulario de nueva pregunta próximamente.', 'info')">${icon('plus', 16)} Nueva Pregunta</button>
+      <button class="btn btn-primary" onclick="showCreateCaseModal()">${icon('plus', 16)} Nuevo Caso (IA)</button>
     </div>
   `;
 
-  Store.questionBank.forEach((q, i) => {
-    const module = Store.getModuleById(q.module_id);
-    const typeLabels = { single: 'Opción única', multiple: 'Opción múltiple', caso: 'Caso práctico' };
-    const diffColors = { facil: 'success', media: 'warning', alta: 'danger' };
-
+  Store.caseBank.forEach((c, i) => {
     html += `
-      <div class="question-bank-item animate-fade-in" style="animation-delay:${i * 50}ms">
-        <div class="question-bank-number">${i + 1}</div>
-        <div class="question-bank-content">
-          <div class="question-bank-text">${q.enunciado}</div>
-          <div class="question-bank-meta">
-            <span class="badge badge-neutral">${typeLabels[q.tipo]}</span>
-            <span class="badge badge-${diffColors[q.dificultad]}">${q.dificultad}</span>
-            <span class="text-xs text-tertiary">${module?.titulo || 'Módulo desconocido'}</span>
+      <div class="case-bank-item animate-fade-in" style="animation-delay:${i * 50}ms">
+        <div class="case-bank-preview">
+          ${c.imagen_url ? `<img src="${c.imagen_url}" style="width:100%; height:100%; object-fit:cover; border-radius:8px">` : icon('records', 24)}
+        </div>
+        <div class="flex-1">
+          <h4 class="font-bold text-primary mb-1">${c.titulo}</h4>
+          <p class="text-xs text-tertiary line-clamp-1 mb-2">${c.descripcion}</p>
+          <div class="flex gap-2">
+            ${c.variantes.map((v, idx) => `<span class="badge badge-neutral">v${idx + 1}</span>`).join('')}
           </div>
         </div>
-        <div class="question-bank-actions">
+        <div class="case-bank-actions">
           <button class="btn btn-ghost btn-icon btn-sm">${icon('edit', 14)}</button>
-          <button class="btn btn-ghost btn-icon btn-sm" style="color:var(--color-danger-400)">${icon('trash', 14)}</button>
+          <button class="btn btn-ghost btn-icon btn-sm" style="color:var(--color-danger-400)" onclick="deleteCase('${c.id}')">${icon('trash', 14)}</button>
         </div>
       </div>
     `;
   });
 
   container.innerHTML = html;
+}
+
+function showCreateCaseModal() {
+  showModal('Nuevo Caso con IA Vision', `
+    <div class="form-group">
+      <label class="form-label required">Título del Caso</label>
+      <input type="text" id="case-title" class="form-input" placeholder="Ej: Análisis de Bajas Microcentro">
+    </div>
+    <div class="form-group">
+      <label class="form-label required">Descripción / Contexto</label>
+      <textarea id="case-desc" class="form-input" placeholder="Describe brevemente la situación o el tablero que subirás..."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label required">Imagen del Tablero PBi</label>
+      <div class="upload-zone" id="case-upload-zone" onclick="document.getElementById('case-image-input').click()">
+        <input type="file" id="case-image-input" accept="image/*" style="display:none" onchange="previewCaseImage(event)">
+        <div id="case-preview-container" class="flex flex-col items-center">
+          <div class="upload-zone-icon">${icon('upload', 24)}</div>
+          <div class="upload-zone-title">Haz clic para subir captura de Power BI</div>
+        </div>
+      </div>
+    </div>
+    <div id="ai-variants-section" class="hidden mt-4">
+      <h5 class="text-xs font-bold uppercase text-tertiary mb-3 flex items-center gap-1">${icon('sparkle', 12)} Variantes Sugeridas por IA</h5>
+      <div id="ai-variants-loader" class="text-center p-4">
+        <div class="spinner m-auto"></div>
+        <p class="text-xs mt-2">Gemini analizando el tablero...</p>
+      </div>
+      <div id="ai-variants-list" class="flex flex-col gap-2"></div>
+    </div>
+  `, async () => {
+    // Al confirmar el modal
+    const title = document.getElementById('case-title').value;
+    const desc = document.getElementById('case-desc').value;
+    const imgUrl = document.getElementById('case-preview-img')?.src;
+    
+    // Recoger variantes seleccionadas
+    const variantInputs = document.querySelectorAll('.ai-variant-input');
+    const variantes = Array.from(variantInputs).map((inp, idx) => ({
+      id: 'v' + (idx + 1),
+      enunciado: inp.value
+    }));
+
+    if (!title || !desc || variantes.length === 0) {
+      Toast.show('Error', 'Completa el título, descripción y genera variantes.', 'warning');
+      return;
+    }
+
+    const newCase = {
+      id: 'c_' + Date.now(),
+      titulo: title,
+      descripcion: desc,
+      imagen_url: imgUrl,
+      variantes: variantes,
+      created_at: new Date().toISOString()
+    };
+
+    Store.caseBank.push(newCase);
+    Store.saveToStorage();
+    Toast.show('Caso Creado', 'El caso situacional ha sido añadido al banco.', 'success');
+    closeModal();
+    showCaseBank();
+  }, 'Guardar Caso', 'btn-generate-variants');
+
+  // Añadir botón de generación de variantes en el footer del modal (inyectado manualmente por el modal helper)
+  // Como el modal helper actual no soporta botones extra fácilmente, lo haremos interactivo al subir la imagen.
+}
+
+let lastUploadedBase64 = null;
+
+async function previewCaseImage(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    lastUploadedBase64 = e.target.result;
+    document.getElementById('case-preview-container').innerHTML = `
+      <img src="${lastUploadedBase64}" id="case-preview-img" style="max-height:150px; border-radius:8px; margin-bottom:10px shadow:var(--shadow-lg)">
+      <div class="text-xs text-primary font-bold">Cambiar imagen</div>
+    `;
+    
+    // Disparar generación automática de variantes
+    document.getElementById('ai-variants-section').classList.remove('hidden');
+    generateCaseVariants(lastUploadedBase64);
+  };
+  reader.readAsDataURL(file);
+}
+
+async function generateCaseVariants(base64Image) {
+  const loader = document.getElementById('ai-variants-loader');
+  const list = document.getElementById('ai-variants-list');
+  const title = document.getElementById('case-title').value;
+  const desc = document.getElementById('case-desc').value;
+
+  loader.style.display = 'block';
+  list.innerHTML = '';
+
+  const apiKey = EIF_CONFIG.GEMINI_API_KEY || localStorage.getItem('gemini_api_key');
+  if (!apiKey) {
+    Toast.show('Error', 'API Key de Gemini no configurada.', 'danger');
+    return;
+  }
+
+  try {
+    // Limpiar el prefijo data:image/png;base64,
+    const base64Content = base64Image.split(',')[1];
+
+    const prompt = `Analiza este tablero de Power BI de Megatlon. 
+    Contexto: ${title}. ${desc}.
+    Enumera 3 desafíos o situaciones críticas que un colaborador debería saber resolver observando estos datos.
+    Devuelve ÚNICAMENTE un array JSON de strings con las 3 preguntas/desafíos.
+    Ejemplo format: ["¿Qué harías si...?", "¿Cómo explicas...?", "¿Cuál es el indicador...?"]`;
+
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{
+          parts: [
+            { text: prompt },
+            { inline_data: { mime_type: "image/jpeg", data: base64Content } }
+          ]
+        }]
+      })
+    });
+
+    const data = await response.json();
+    loader.style.display = 'none';
+
+    if (data.candidates && data.candidates[0].content.parts[0].text) {
+      const text = data.candidates[0].content.parts[0].text;
+      const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
+      const variants = JSON.parse(cleanJson).slice(0, 3);
+
+      variants.forEach((v, i) => {
+        list.innerHTML += `
+          <div class="flex items-center gap-2 animate-fade-in" style="animation-delay:${i * 100}ms">
+            <span class="text-xs font-bold text-tertiary">#${i + 1}</span>
+            <input type="text" class="form-input ai-variant-input" value="${v}" style="font-size:13px; padding:8px">
+          </div>
+        `;
+      });
+    }
+  } catch (err) {
+    loader.style.display = 'none';
+    Toast.show('Error IA', 'No se pudieron generar las variantes automáticas.', 'warning');
+    // Fallback manual
+    for (let i = 1; i <= 3; i++) {
+      list.innerHTML += `<input type="text" class="form-input ai-variant-input" placeholder="Variante ${i} (Escribe manualmente)" style="margin-bottom:5px">`;
+    }
+  }
+}
+
+function deleteCase(id) {
+  if (confirm('¿Eliminar este caso permanentemente?')) {
+    Store.caseBank = Store.caseBank.filter(c => c.id !== id);
+    Store.saveToStorage();
+    showCaseBank();
+  }
 }
 
 function showGenerateLink() {

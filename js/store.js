@@ -105,7 +105,8 @@ const Store = {
       msCriteria: this.msCriteria,
       msEvaluations: this.msEvaluations,
       digitalRecords: this.digitalRecords,
-      mockNotifications: this.mockNotifications
+      mockNotifications: this.mockNotifications,
+      caseBank: this.caseBank || []
     };
     localStorage.setItem('eif_db', JSON.stringify(dataToSave));
   },
@@ -280,6 +281,22 @@ const Store = {
     { id: 'q2', module_id: 'm1', enunciado: '¿Qué elementos debe incluir un saludo de bienvenida?', tipo: 'multiple', opciones: ['Contacto visual', 'Sonrisa genuina', 'Nombre del cliente si lo conoce', 'Ofertas del día'], respuesta_correcta: [0, 1, 2], dificultad: 'facil' },
     { id: 'q3', module_id: 'm1', enunciado: 'Un cliente se acerca visiblemente molesto por una espera prolongada. Describa cómo manejaría esta situación paso a paso.', tipo: 'caso', opciones: [], respuesta_correcta: null, dificultad: 'alta' },
     { id: 'q4', module_id: 'm1', enunciado: '¿Cuánto tiempo máximo debe esperar un cliente para ser atendido?', tipo: 'single', opciones: ['1 minuto', '3 minutos', '5 minutos', '10 minutos'], respuesta_correcta: 1, dificultad: 'facil' },
+  ],
+
+  // ── Banco de Casos (Simulaciones de Campo) ────────
+  caseBank: [
+    {
+      id: 'c1',
+      titulo: 'Lectura de Tablero: Caída de Retención',
+      descripcion: 'El tablero de Power BI muestra una caída del 12% en la retención de socios en la jornada de la mañana durante el último mes.',
+      indicadores: ['Retención', 'Bajas'],
+      imagen_url: null, // Aquí se guardará el base64 de la imagen del tablero
+      variantes: [
+        { id: 'v1', enunciado: '¿Qué tres acciones inmediatas deberías discutir con tu equipo de recepción para mitigar este impacto?' },
+        { id: 'v2', enunciado: 'Si observamos que el NPS (Net Promoter Score) se mantiene alto, ¿qué factor externo podría estar afectando la retención?' },
+        { id: 'v3', enunciado: 'Propón un plan de incentivos para los profesores de fitness grupal basado en los datos de asistencia mostrados.' }
+      ]
+    }
   ],
 
   // ── Mystery Shopper — Criterios ──────────────────────
