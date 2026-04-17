@@ -418,14 +418,16 @@ function showCaseBank() {
 }
 
 function showCreateCaseModal() {
-  showModal('Nuevo Caso con IA Vision', `
+  const modalId = showModal('Nuevo Caso con IA Vision', `
     <div class="form-group">
       <label class="form-label required">Título del Caso</label>
       <input type="text" id="case-title" class="form-input" placeholder="Ej: Análisis de Bajas Microcentro">
+      <div id="error-title" class="text-xs text-danger mt-1 hidden">El título es obligatorio.</div>
     </div>
     <div class="form-group">
       <label class="form-label required">Descripción / Contexto</label>
-      <textarea id="case-desc" class="form-input" placeholder="Describe brevemente la situación o el tablero que subirás..."></textarea>
+      <textarea id="case-desc" class="form-input" placeholder="Describe brevemente la situación o deja que la IA lo haga por ti al subir la imagen..." style="height:80px"></textarea>
+      <div id="error-desc" class="text-xs text-danger mt-1 hidden">La descripción es obligatoria.</div>
     </div>
     <div class="form-group">
       <label class="form-label required">Imagen del Tablero PBi</label>
@@ -436,32 +438,40 @@ function showCreateCaseModal() {
           <div class="upload-zone-title">Haz clic para subir captura de Power BI</div>
         </div>
       </div>
+      <div id="error-image" class="text-xs text-danger mt-1 hidden">Debes subir una imagen para analizar.</div>
     </div>
     <div id="ai-variants-section" class="hidden mt-4">
-      <h5 class="text-xs font-bold uppercase text-tertiary mb-3 flex items-center gap-1">${icon('sparkle', 12)} Variantes Sugeridas por IA</h5>
+      <h5 class="text-xs font-bold uppercase text-tertiary mb-3 flex items-center gap-1">${icon('sparkle', 12)} Análisis y Variantes por IA</h5>
       <div id="ai-variants-loader" class="text-center p-4">
-        <div class="spinner m-auto"></div>
-        <p class="text-xs mt-2">Gemini analizando el tablero...</p>
+        <div class="spinner m-auto" style="width:24px;height:24px;border-width:2px;border-top-color:var(--color-primary-500)"></div>
+        <p class="text-xs mt-2">Gemini analizando el tablero y sugiriendo contexto...</p>
       </div>
       <div id="ai-variants-list" class="flex flex-col gap-2"></div>
+      <div id="error-variants" class="text-xs text-danger mt-1 hidden">Debes esperar a que la IA genere las variantes.</div>
     </div>
   `, async () => {
-    // Al confirmar el modal
     const title = document.getElementById('case-title').value;
     const desc = document.getElementById('case-desc').value;
     const imgUrl = document.getElementById('case-preview-img')?.src;
     
-    // Recoger variantes seleccionadas
+    // Reset errores
+    ['title', 'desc', 'image', 'variants'].forEach(id => document.getElementById('error-'+id).classList.add('hidden'));
+
+    // Recoger variantes
     const variantInputs = document.querySelectorAll('.ai-variant-input');
     const variantes = Array.from(variantInputs).map((inp, idx) => ({
       id: 'v' + (idx + 1),
       enunciado: inp.value
     }));
 
-    if (!title || !desc || variantes.length === 0) {
-      Toast.show('Error', 'Completa el título, descripción y genera variantes.', 'warning');
-      return;
-    }
+    // Validaciones detalladas
+    let hasError = false;
+    if (!title) { document.getElementById('error-title').classList.remove('hidden'); hasError = true; }
+    if (!desc) { document.getElementById('error-desc').classList.remove('hidden'); hasError = true; }
+    if (!imgUrl) { document.getElementById('error-image').classList.remove('hidden'); hasError = true; }
+    if (variantes.length === 0) { document.getElementById('error-variants').classList.remove('hidden'); hasError = true; }
+
+    if (hasError) return;
 
     const newCase = {
       id: 'c_' + Date.now(),
@@ -477,10 +487,7 @@ function showCreateCaseModal() {
     Toast.show('Caso Creado', 'El caso situacional ha sido añadido al banco.', 'success');
     closeModal();
     showCaseBank();
-  }, 'Guardar Caso', 'btn-generate-variants');
-
-  // Añadir botón de generación de variantes en el footer del modal (inyectado manualmente por el modal helper)
-  // Como el modal helper actual no soporta botones extra fácilmente, lo haremos interactivo al subir la imagen.
+  }, 'Guardar Caso');
 }
 
 let lastUploadedBase64 = null;
@@ -493,7 +500,7 @@ async function previewCaseImage(event) {
   reader.onload = async (e) => {
     lastUploadedBase64 = e.target.result;
     document.getElementById('case-preview-container').innerHTML = `
-      <img src="${lastUploadedBase64}" id="case-preview-img" style="max-height:150px; border-radius:8px; margin-bottom:10px shadow:var(--shadow-lg)">
+      <img src="${lastUploadedBase64}" id="case-preview-img" style="max-height:150px; border-radius:8px; margin-bottom:10px; shadow:var(--shadow-lg)">
       <div class="text-xs text-primary font-bold">Cambiar imagen</div>
     `;
     
@@ -507,9 +514,11 @@ async function previewCaseImage(event) {
 async function generateCaseVariants(base64Image) {
   const loader = document.getElementById('ai-variants-loader');
   const list = document.getElementById('ai-variants-list');
-  const title = document.getElementById('case-title').value;
-  const desc = document.getElementById('case-desc').value;
+  const titleInput = document.getElementById('case-title');
+  const descInput = document.getElementById('case-desc');
+  const saveBtn = document.querySelector('.modal-footer .btn-primary');
 
+  if (saveBtn) saveBtn.disabled = true;
   loader.style.display = 'block';
   list.innerHTML = '';
 
@@ -520,14 +529,16 @@ async function generateCaseVariants(base64Image) {
   }
 
   try {
-    // Limpiar el prefijo data:image/png;base64,
     const base64Content = base64Image.split(',')[1];
 
     const prompt = `Analiza este tablero de Power BI de Megatlon. 
-    Contexto: ${title}. ${desc}.
-    Enumera 3 desafíos o situaciones críticas que un colaborador debería saber resolver observando estos datos.
-    Devuelve ÚNICAMENTE un array JSON de strings con las 3 preguntas/desafíos.
-    Ejemplo format: ["¿Qué harías si...?", "¿Cómo explicas...?", "¿Cuál es el indicador...?"]`;
+    Tu tarea es:
+    1. Sugerir un TÍTULO corto y profesional.
+    2. Sugerir una DESCRIPCIÓN del contexto observado en 2 líneas.
+    3. Generar 3 variantes de preguntas situacionales para una evaluación.
+    
+    Devuelve ÚNICAMENTE un objeto JSON puro con este formato:
+    {"titulo": "...", "descripcion": "...", "variantes": ["v1", "v2", "v3"]}`;
 
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
@@ -544,13 +555,18 @@ async function generateCaseVariants(base64Image) {
 
     const data = await response.json();
     loader.style.display = 'none';
+    if (saveBtn) saveBtn.disabled = false;
 
     if (data.candidates && data.candidates[0].content.parts[0].text) {
       const text = data.candidates[0].content.parts[0].text;
-      const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').trim();
-      const variants = JSON.parse(cleanJson).slice(0, 3);
+      const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').replace(/^JSON/i, '').trim();
+      const result = JSON.parse(cleanJson);
 
-      variants.forEach((v, i) => {
+      // Auto-llenar si están vacíos
+      if (!titleInput.value) titleInput.value = result.titulo;
+      if (!descInput.value) descInput.value = result.descripcion;
+
+      result.variantes.forEach((v, i) => {
         list.innerHTML += `
           <div class="flex items-center gap-2 animate-fade-in" style="animation-delay:${i * 100}ms">
             <span class="text-xs font-bold text-tertiary">#${i + 1}</span>
@@ -560,11 +576,13 @@ async function generateCaseVariants(base64Image) {
       });
     }
   } catch (err) {
+    console.error(err);
     loader.style.display = 'none';
+    if (saveBtn) saveBtn.disabled = false;
     Toast.show('Error IA', 'No se pudieron generar las variantes automáticas.', 'warning');
     // Fallback manual
     for (let i = 1; i <= 3; i++) {
-      list.innerHTML += `<input type="text" class="form-input ai-variant-input" placeholder="Variante ${i} (Escribe manualmente)" style="margin-bottom:5px">`;
+      list.innerHTML += `<div class="flex gap-2"><input type="text" class="form-input ai-variant-input" placeholder="Variante ${i}" style="margin-bottom:5px"></div>`;
     }
   }
 }
