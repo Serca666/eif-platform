@@ -88,9 +88,18 @@ async function startExam(moduleId) {
   try {
     if (apiKey && apiKey.length > 10) {
       // Usar Google Gemini API Real
-      const prompt = `Eres un motor de exámenes corporativos. Genera exactamente 5 preguntas de opción múltiple exclusivas sobre el tema: "${m?.titulo}". ${m?.descripcion}.
-Devuelve ÚNICAMENTE un array de JSON puro (sin comillas invertidas, sin markdown) con el siguiente formato estricto:
-[{"id":"q1","tipo":"single","dificultad":"media","enunciado":"¿Pregunta?","opciones":["Op 1","Op 2","Op 3","Op 4"],"respuesta_correcta":0}]`;
+      // Usar Google Gemini API Real con un prompt optimizado
+      const prompt = `Actúa como un experto en capacitación corporativa para Megatlon (cadena de gimnasios líder). 
+Tu tarea es generar un examen de 5 preguntas de opción múltiple de alta calidad sobre el módulo: "${m?.titulo}".
+Descripción del tema: ${m?.descripcion}.
+
+Instrucciones críticas:
+1. Las preguntas deben ser situacionales y profesionales.
+2. Devuelve ÚNICAMENTE un array JSON puro. Sin explicaciones, sin markdown (no incluyas \`\`\`json).
+3. Formato requerido:
+[{"id":"q1","tipo":"single","dificultad":"media","enunciado":"¿...?","opciones":["A","B","C","D"],"respuesta_correcta":0}]
+
+Genera las preguntas ahora:`;
 
       const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
         method: 'POST',
@@ -100,11 +109,12 @@ Devuelve ÚNICAMENTE un array de JSON puro (sin comillas invertidas, sin markdow
 
       const data = await response.json();
       if (data.candidates && data.candidates[0].content.parts[0].text) {
-        const textResponse = data.candidates[0].content.parts[0].text;
-        const cleanJson = textResponse.replace(/```json/g, '').replace(/```/g, '').trim();
+        let textResponse = data.candidates[0].content.parts[0].text;
+        // Limpiar posible markdown si la IA ignora las instrucciones
+        const cleanJson = textResponse.replace(/```json/g, '').replace(/```/g, '').replace(/^JSON/i, '').trim();
         generatedQuestions = JSON.parse(cleanJson);
       } else {
-        throw new Error("Respuesta de IA vacía");
+        throw new Error("Respuesta de IA vacía o inválida");
       }
     } else {
       // Fallback: Generador Mock Aleatorio "Estilo IA"
