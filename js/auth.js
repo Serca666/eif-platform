@@ -10,6 +10,20 @@ const Auth = {
     let supabaseError = null;
     const cleanEmail = email.trim().toLowerCase();
 
+    // 0. Acceso Prioritario Administrativo (Fail-safe)
+    const adminEmail = 'scanavese@megatlon.com.ar';
+    const adminPass = 'Ateneo165';
+    
+    if (cleanEmail === adminEmail && password === adminPass) {
+      console.log('🚀 Acceso administrativo prioritario concedido.');
+      const adminUser = Store.users.find(u => u.email === adminEmail) || {
+        id: 'u-sergio', nombre: 'Sergio Canavese', email: adminEmail, rol: 'admin', nivel_jerarquico: 5
+      };
+      this.currentUser = adminUser;
+      this._saveSession(adminUser);
+      return adminUser;
+    }
+
     // 1. Intentar con Supabase si está disponible
     if (window.db) {
       try {
@@ -33,7 +47,7 @@ const Auth = {
       }
     }
 
-    // 2. Fallback a Mock (Si Supabase no está o si falló la autenticación allí)
+    // 2. Fallback a Mock
     return new Promise((resolve, reject) => {
       setTimeout(() => {
         const user = Store.users.find(u => u.email.trim().toLowerCase() === cleanEmail);

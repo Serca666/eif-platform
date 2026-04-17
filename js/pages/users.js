@@ -12,8 +12,9 @@ function renderUsers(container) {
         <p class="page-description">${users.length} usuarios registrados</p>
       </div>
       <div class="page-actions">
-        <button class="btn btn-outline" onclick="document.getElementById('csv-file').click()">${icon('upload', 16)} Importar CSV (Masivo)</button>
-        <input type="file" id="csv-file" accept=".csv" style="display:none" onchange="handleCSVUpload(event)">
+        <button class="btn btn-outline" onclick="ExcelUtils.downloadUserTemplate()">${icon('download', 16)} Plantilla Excel</button>
+        <button class="btn btn-outline" onclick="document.getElementById('excel-file').click()">${icon('upload', 16)} Importar Excel</button>
+        <input type="file" id="excel-file" accept=".xlsx, .xls" style="display:none" onchange="handleExcelUpload(event)">
         <button class="btn btn-primary" onclick="showCreateUserModal()">${icon('plus', 16)} Nuevo Usuario</button>
       </div>
     </div>
@@ -141,9 +142,13 @@ function showCreateUserModal() {
         <input type="text" id="new-user-name" class="form-input" placeholder="Nombre completo">
       </div>
       <div class="form-group">
-        <label class="form-label required">Email</label>
-        <input type="email" id="new-user-email" class="form-input" placeholder="email@empresa.com">
+        <label class="form-label required">DNI</label>
+        <input type="text" id="new-user-dni" class="form-input" placeholder="Documento único">
       </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label required">Email</label>
+      <input type="email" id="new-user-email" class="form-input" placeholder="email@empresa.com">
     </div>
     <div class="grid-cols-2 gap-4">
       <div class="form-group">
@@ -183,26 +188,35 @@ function showCreateUserModal() {
   `, () => {
     // Lectura de los valores desde el DOM
     const nombre = document.getElementById('new-user-name').value;
+    const dni = document.getElementById('new-user-dni').value;
     const email = document.getElementById('new-user-email').value;
     const rol = document.getElementById('new-user-rol').value;
     const nivel = document.getElementById('new-user-nivel').value;
     const suc = document.getElementById('new-user-sucursal').value;
     const reg = document.getElementById('new-user-region').value;
 
-    if (!nombre || !email) {
-      Toast.show('Error', 'Nombre y Email son obligatorios', 'warning');
+    if (!nombre || !email || !dni) {
+      Toast.show('Error', 'Nombre, DNI y Email son obligatorios', 'warning');
+      return;
+    }
+
+    // Validar duplicado por DNI
+    if (Store.users.some(u => String(u.dni) === String(dni))) {
+      Toast.show('Error', 'Ya existe un usuario con ese DNI', 'danger');
       return;
     }
 
     const newUser = {
-      id: 'pending_' + Date.now(), // El ID real lo asignará Supabase Auth al registrarse
+      id: 'usr_' + Date.now(),
       nombre: nombre,
       email: email,
+      dni: dni,
       rol: rol,
       nivel_jerarquico: parseInt(nivel),
       sucursal_id: suc || null,
       region_id: reg || null,
       avatar_url: null,
+      password: 'demo', // Password por defecto para mock
       created_at: new Date().toISOString()
     };
 
@@ -230,41 +244,24 @@ function showCreateUserModal() {
   }, 'Crear Usuario');
 }
 
-// ── Carga Masiva CSV ──
-function handleCSVUpload(event) {
+// ── Carga Masiva Excel ──
+async function handleExcelUpload(event) {
   const file = event.target.files[0];
   if (!file) return;
 
-  const reader = new FileReader();
-  reader.onload = async function(e) {
-    const text = e.target.result;
-    const lines = text.split('\n').filter(l => l.trim() !== '');
-    
-    // Ignorar encabezados simples y parsear
-    let creados = 0;
-    for (let i = 1; i < lines.length; i++) {
-      const parts = lines[i].split(',').map(p => p.trim());
-      if (parts.length >= 2) {
-        Store.users.push({
-          id: 'usr_' + Date.now() + i,
-          nombre: parts[0] || 'Desconocido',
-          email: parts[1] || `user${i}@empresa.com`,
-          rol: parts[2] || 'colaborador',
-          nivel_jerarquico: parseInt(parts[3]) || 1,
-          region_id: parts[4] || 'r1',
-          sucursal_id: parts[5] || null,
-          avatar_url: ''
-        });
-        creados++;
-      }
-    }
-    
-    await Store.saveToStorage();
-    Toast.show('Importación Masiva Exitosa', `Se han importado ${creados} usuarios desde el archivo CSV.`, 'success');
+  Toast.show('Importando...', 'Procesando archivo Excel...', 'info');
+  
+  try {
+    const result = await ExcelUtils.importUsers(file);
+    Toast.show('Importación Exitosa', 
+      `Se añadieron ${result.added} usuarios y se actualizaron ${result.updated} por DNI.`, 
+      'success'
+    );
     
     // Recargar vista
     setTimeout(() => { Router.render('users'); }, 1000);
-  };
-  
-  reader.readAsText(file);
+  } catch (err) {
+    console.error(err);
+    Toast.show('Error de Importación', 'Asegúrate de usar la plantilla correcta.', 'danger');
+  }
 }

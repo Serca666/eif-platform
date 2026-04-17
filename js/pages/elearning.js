@@ -14,7 +14,12 @@ function renderElearning(container) {
         <p class="page-description">${isAdmin ? `${modules.length} módulos en total` : `${modules.length} módulos asignados a tu nivel`}</p>
       </div>
       <div class="page-actions">
-        ${isAdmin ? `<button class="btn btn-primary" onclick="showCreateModuleModal()">${icon('plus', 16)} Nuevo Módulo</button>` : ''}
+        ${isAdmin ? `
+          <button class="btn btn-outline" onclick="ExcelUtils.downloadModuleTemplate()">${icon('download', 16)} Plantilla Excel</button>
+          <button class="btn btn-outline" onclick="document.getElementById('module-excel-file').click()">${icon('upload', 16)} Importar Excel</button>
+          <input type="file" id="module-excel-file" accept=".xlsx, .xls" style="display:none" onchange="handleModuleExcelUpload(event)">
+          <button class="btn btn-primary" onclick="showCreateModuleModal()">${icon('plus', 16)} Nuevo Módulo</button>
+        ` : ''}
       </div>
     </div>
   `;
@@ -315,5 +320,23 @@ function downloadEbook(titulo) {
     });
   } else {
     Toast.show('Error', 'El plugin de PDF no está cargado.', 'warning');
+  }
+}
+// ── Carga Masiva Módulos Excel ──
+async function handleModuleExcelUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  Toast.show('Importando...', 'Cargando módulos desde Excel...', 'info');
+  
+  try {
+    const result = await ExcelUtils.importModules(file);
+    Toast.show('Importación Exitosa', `Se han cargado ${result.added} nuevos módulos como borradores.`, 'success');
+    
+    // Recargar vista
+    setTimeout(() => { Router.render('elearning'); }, 1000);
+  } catch (err) {
+    console.error(err);
+    Toast.show('Error de Importación', 'Asegúrate de usar la plantilla de módulos correcta.', 'danger');
   }
 }
