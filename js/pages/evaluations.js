@@ -525,20 +525,41 @@ async function generateCaseVariants(base64Image) {
   const apiKey = EIF_CONFIG.GEMINI_API_KEY || localStorage.getItem('gemini_api_key');
   if (!apiKey) {
     Toast.show('Error', 'API Key de Gemini no configurada.', 'danger');
+    if (saveBtn) saveBtn.disabled = false;
     return;
   }
 
+  const finalize = (variants = []) => {
+    loader.style.display = 'none';
+    if (saveBtn) saveBtn.disabled = false;
+    
+    // Si la IA no devolvió variantes, poner 3 campos vacíos obligatorios
+    if (variants.length === 0) {
+      for (let i = 1; i <= 3; i++) {
+        list.innerHTML += `<div class="flex gap-2"><span class="text-xs font-bold text-tertiary">#${i}</span><input type="text" class="form-input ai-variant-input" placeholder="Escribe la variante ${i} manualmente..." style="font-size:13px; padding:8px"></div>`;
+      }
+    } else {
+      variants.forEach((v, i) => {
+        list.innerHTML += `
+          <div class="flex items-center gap-2 animate-fade-in" style="animation-delay:${i * 100}ms">
+            <span class="text-xs font-bold text-tertiary">#${i + 1}</span>
+            <input type="text" class="form-input ai-variant-input" value="${v}" style="font-size:13px; padding:8px">
+          </div>
+        `;
+      });
+    }
+  };
+
   try {
     const base64Content = base64Image.split(',')[1];
-
     const prompt = `Analiza este tablero de Power BI de Megatlon. 
     Tu tarea es:
     1. Sugerir un TÍTULO corto y profesional.
     2. Sugerir una DESCRIPCIÓN del contexto observado en 2 líneas.
-    3. Generar 3 variantes de preguntas situacionales para una evaluación.
+    3. Generar 3 variantes de situaciones o desafíos para una evaluación de gerentes.
     
-    Devuelve ÚNICAMENTE un objeto JSON puro con este formato:
-    {"titulo": "...", "descripcion": "...", "variantes": ["v1", "v2", "v3"]}`;
+    Devuelve ÚNICAMENTE un objeto JSON puro:
+    {"titulo": "...", "descripcion": "...", "variantes": ["...", "...", "..."]}`;
 
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
@@ -554,36 +575,27 @@ async function generateCaseVariants(base64Image) {
     });
 
     const data = await response.json();
-    loader.style.display = 'none';
-    if (saveBtn) saveBtn.disabled = false;
 
     if (data.candidates && data.candidates[0].content.parts[0].text) {
       const text = data.candidates[0].content.parts[0].text;
-      const cleanJson = text.replace(/```json/g, '').replace(/```/g, '').replace(/^JSON/i, '').trim();
-      const result = JSON.parse(cleanJson);
-
-      // Auto-llenar si están vacíos
-      if (!titleInput.value) titleInput.value = result.titulo;
-      if (!descInput.value) descInput.value = result.descripcion;
-
-      result.variantes.forEach((v, i) => {
-        list.innerHTML += `
-          <div class="flex items-center gap-2 animate-fade-in" style="animation-delay:${i * 100}ms">
-            <span class="text-xs font-bold text-tertiary">#${i + 1}</span>
-            <input type="text" class="form-input ai-variant-input" value="${v}" style="font-size:13px; padding:8px">
-          </div>
-        `;
-      });
+      
+      // Extracción robusta de JSON usando Regex
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const result = JSON.parse(jsonMatch[0]);
+        if (!titleInput.value) titleInput.value = result.titulo || '';
+        if (!descInput.value) descInput.value = result.descripcion || '';
+        finalize(result.variantes || []);
+      } else {
+        throw new Error("No se encontró JSON en la respuesta");
+      }
+    } else {
+      throw new Error("Respuesta inválida de Gemini");
     }
   } catch (err) {
-    console.error(err);
-    loader.style.display = 'none';
-    if (saveBtn) saveBtn.disabled = false;
-    Toast.show('Error IA', 'No se pudieron generar las variantes automáticas.', 'warning');
-    // Fallback manual
-    for (let i = 1; i <= 3; i++) {
-      list.innerHTML += `<div class="flex gap-2"><input type="text" class="form-input ai-variant-input" placeholder="Variante ${i}" style="margin-bottom:5px"></div>`;
-    }
+    console.error("Error en generateCaseVariants:", err);
+    Toast.show('IA pausada', 'Completa las variantes manualmente.', 'warning');
+    finalize([]); // Fallback a campos vacíos
   }
 }
 
