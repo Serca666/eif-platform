@@ -436,3 +436,37 @@
   .results-stats { grid-template-columns: 1fr; }
   .question-dots { max-width: 280px; margin: 0 auto; }
 }
+
+/* ── Interactive Simulation Styles ─────────────────────── */
+.exam-mode-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: var(--weight-bold);
+  text-transform: uppercase;
+  background: var(--surface-input);
+  color: var(--text-tertiary);
+  padding: 4px 10px;
+  border-radius: 100px;
+  margin-bottom: var(--space-4);
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--color-primary-400);
+}
+
+.bg-dark { background: #0f172a; }
+
+.btn-xs {
+  padding: 4px 8px;
+  font-size: 10px;
+}
+
+#ai-consultation-box {
+  border-left: 3px solid var(--color-accent-500);
+}
+
+#ai-post-report {
+  box-shadow: 0 10px 30px -10px rgba(99, 102, 241, 0.2);
+}
+
+#ia-report-content {
+  line-height: 1.6;
+}

@@ -53,9 +53,11 @@ function renderEvaluations(container) {
       }
         </div>
         <p class="text-sm text-tertiary mb-4 line-clamp-2">${m.descripcion}</p>
-        <div class="flex items-center justify-between">
-          <div class="text-xs text-tertiary">Máx. ${EIF_CONFIG.EXAM_DEFAULT_MAX_ATTEMPTS} intentos · TTL ${EIF_CONFIG.EXAM_LINK_TTL_HOURS}h</div>
-          ${!passed ? `<button class="btn btn-primary btn-sm">Comenzar ${icon('chevronRight', 14)}</button>` : ''}
+        <div class="flex flex-col gap-2">
+          ${!passed ? `
+            <button class="btn btn-primary w-full" onclick="startExam('${m.id}', 'standard')">${icon('evaluations', 16)} Examen Estándar</button>
+            <button class="btn btn-outline w-full" onclick="startExam('${m.id}', 'assisted')">${icon('sparkle', 16)} Simulación Asistida (IA)</button>
+          ` : ''}
         </div>
       </div>
     `;
@@ -67,7 +69,7 @@ function renderEvaluations(container) {
 }
 
 // Generador de exámenes vía IA
-async function startExam(moduleId) {
+async function startExam(moduleId, mode = 'standard') {
   const container = document.getElementById('app-content');
   const m = Store.getModuleById(moduleId);
   
@@ -142,12 +144,12 @@ Instrucciones:
     generatedQuestions = Store.getQuestionsForModule(moduleId, 5);
   }
 
-  currentExam = { 
     moduleId, 
     questions: generatedQuestions, 
     answers: {}, 
     startTime: Date.now(),
-    caseData: relatedCase // Guardamos el caso para mostrar la imagen en el examen
+    caseData: relatedCase,
+    mode: mode // Guardamos el modo seleccionado
   };
   currentQuestionIndex = 0;
 
@@ -181,12 +183,24 @@ function renderExamQuestion() {
       </div>
 
       <div class="question-card">
+        <div class="exam-mode-badge">${exam.mode === 'assisted' ? `${icon('sparkle', 12)} Simulación Asistida` : 'Examen Estándar'}</div>
         <div class="question-number">${icon('evaluations', 14)} Pregunta ${currentQuestionIndex + 1}</div>
         
         ${exam.caseData && exam.caseData.imagen_url ? `
           <div class="exam-case-image-container mb-4">
-            <p class="text-xs font-bold text-tertiary mb-2 uppercase">Análisis de Tablero: ${exam.caseData.titulo}</p>
+            <div class="flex justify-between items-center bg-dark p-2">
+              <p class="text-xs font-bold text-tertiary uppercase">Tablero: ${exam.caseData.titulo}</p>
+              ${exam.mode === 'assisted' ? `
+                <button class="btn btn-primary btn-xs" onclick="consultAI()">
+                  ${icon('sparkle', 12)} Consultar Tutor IA
+                </button>
+              ` : ''}
+            </div>
             <img src="${exam.caseData.imagen_url}" class="exam-case-image">
+            <div id="ai-consultation-box" class="hidden animate-fade-in p-4 bg-primary-900 border-t border-primary-800 text-xs text-white">
+              <div class="flex items-center gap-2 mb-2 font-bold text-accent-400">${icon('sparkle', 14)} Análisis del Tutor:</div>
+              <div id="ai-consultation-text" class="italic"></div>
+            </div>
           </div>
         ` : ''}
 
@@ -373,9 +387,91 @@ function showExamResults(score, correct, total, passed, exam) {
           <button class="btn btn-outline" onclick="Router.navigate('evaluations')">Volver a Evaluaciones</button>
           ${passed ? '' : '<button class="btn btn-primary" onclick="Router.navigate(\'elearning\')">Repasar Contenido</button>'}
         </div>
+
+        <div id="ai-post-report" class="mt-8 text-left p-6 bg-surface-card border border-border-subtle rounded-xl animate-fade-in">
+          <h3 class="flex items-center gap-2 text-md font-bold text-primary mb-4">${icon('sparkle', 18)} Reporte Estratégico de la IA</h3>
+          <div id="ia-report-content" class="text-sm text-tertiary leading-relaxed">
+            <div class="spinner spinner-sm m-auto"></div>
+            Generando análisis de impacto basado en tus respuestas...
+          </div>
+        </div>
       </div>
     </div>
   `;
+  
+  generateAIRepoet(score, correct, total, exam);
+}
+
+async function consultAI() {
+  const box = document.getElementById('ai-consultation-box');
+  const text = document.getElementById('ai-consultation-text');
+  const q = currentExam.questions[currentQuestionIndex];
+  
+  box.classList.remove('hidden');
+  text.innerHTML = '<div class="spinner spinner-xs" style="border-top-color:white"></div> Analizando datos del tablero...';
+  
+  const apiKey = EIF_CONFIG.GEMINI_API_KEY || localStorage.getItem('gemini_api_key');
+  if (!apiKey) return Toast.show('Error', 'API Key no configurada', 'danger');
+
+  try {
+    const base64Content = currentExam.caseData?.imagen_url?.split(',')[1];
+    const prompt = `Como tutor de gestión en Megatlon, ayuda al colaborador a interpretar el tablero para responder esta pregunta: "${q.enunciado}". 
+    Opciones disponibles: ${q.opciones.join(', ')}.
+    DA UNA PISTA ESTRATÉGICA BASADA EN LOS DATOS DEL GRÁFICO, NO DES LA RESPUESTA DIRECTA.
+    Sé breve (máximo 30 palabras).`;
+
+    const parts = [{ text: prompt }];
+    if (base64Content) parts.push({ inline_data: { mime_type: "image/jpeg", data: base64Content } });
+
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents: [{ parts }] })
+    });
+
+    const data = await response.json();
+    if (data.candidates && data.candidates[0].content.parts[0].text) {
+      text.innerText = data.candidates[0].content.parts[0].text;
+    }
+  } catch (err) {
+    text.innerText = "No pude contactar al tutor en este momento. Revisa la tendencia del gráfico.";
+  }
+}
+
+async function generateAIRepoet(score, correct, total, exam) {
+  const container = document.getElementById('ia-report-content');
+  const apiKey = EIF_CONFIG.GEMINI_API_KEY || localStorage.getItem('gemini_api_key');
+  if (!apiKey) {
+    container.innerHTML = "No se pudo generar el reporte (API Key ausente).";
+    return;
+  }
+
+  try {
+    const base64Content = exam.caseData?.imagen_url?.split(',')[1];
+    const prompt = `Analiza las decisiones de este colaborador en Megatlon.
+    Módulo: ${exam.moduleId}. Score: ${score}/10. 
+    Correctas: ${correct} de ${total}.
+    
+    Genera un REPORTE ESTRATÉGICO breve (3 párrafos cortos) explicando cómo sus decisiones afectan los KPIS del tablero PBi adjunto.
+    Si falló mucho, recomienda en qué datos del gráfico debería fijarse más.
+    Usa un tono profesional, motivador y corporativo.`;
+
+    const parts = [{ text: prompt }];
+    if (base64Content) parts.push({ inline_data: { mime_type: "image/jpeg", data: base64Content } });
+
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents: [{ parts }] })
+    });
+
+    const data = await response.json();
+    if (data.candidates && data.candidates[0].content.parts[0].text) {
+      container.innerHTML = data.candidates[0].content.parts[0].text.replace(/\n/g, '<br>');
+    }
+  } catch (err) {
+    container.innerHTML = "Tu desempeño ha sido registrado. Sigue analizando los tableros para mejorar tu capacidad de decisión.";
+  }
 }
 
 // ── Banco de Casos (Admin) ──
