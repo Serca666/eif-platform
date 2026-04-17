@@ -26,10 +26,26 @@ const Router = {
     content.classList.add('page-exit');
     setTimeout(() => {
       content.classList.remove('page-exit');
+      
+      console.log(`[Router] Navegando a: ${path}`);
+      
       if (handler) {
-        handler(content);
+        try {
+          handler(content);
+        } catch (err) {
+          console.error(`[Router] Error renderizando la página ${path}:`, err);
+          content.innerHTML = `
+            <div class="empty-state">
+              <div class="empty-state-icon">⚠️</div>
+              <h3 class="empty-state-title">Error al cargar la página</h3>
+              <p class="empty-state-text">Ocurrió un error inesperado al renderizar esta sección. Revisá la consola para más detalles.</p>
+              <button class="btn btn-outline btn-sm mt-4" onclick="window.location.reload()">Recargar Aplicación</button>
+            </div>
+          `;
+        }
       } else {
-        content.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🚧</div><h3 class="empty-state-title">Página no encontrada</h3><p class="empty-state-text">La sección que buscás no existe.</p></div>`;
+        console.warn(`[Router] Ruta no registrada: ${path}`);
+        content.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🚧</div><h3 class="empty-state-title">Página no encontrada</h3><p class="empty-state-text">La sección "${path}" que buscás no existe o no tenés permisos.</p></div>`;
       }
       content.classList.add('page-enter');
       // Actualizar sidebar activo

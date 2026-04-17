@@ -12,7 +12,8 @@ function renderRecords(container) {
   let targetUser = user;
 
   if (isAdmin || isGerente) {
-    targetUserId = 'u5'; // Default a Diego Ramírez para demo
+    const firstColab = Store.users.find(u => u.rol === 'colaborador');
+    targetUserId = firstColab ? firstColab.id : user.id;
     targetUser = Store.getUserById(targetUserId);
   }
 

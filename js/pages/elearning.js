@@ -161,13 +161,16 @@ function openModuleDetail(moduleId) {
           </div>
           <div class="module-viewer-content" style="padding:0; background:#000; height:600px; display:flex; flex-direction:column; overflow:hidden; border-radius: 0 0 16px 16px;">
             ${m.tipo_contenido === 'PDF' ? `
-              <object data="https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf" type="application/pdf" width="100%" height="100%">
-                <p>Tu navegador no posee un plugin de PDF. <a href="#">Descargar E-book</a></p>
+              <object data="${m.archivo_url || 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf'}" type="application/pdf" width="100%" height="100%">
+                <p>Tu navegador no posee un plugin de PDF. <a href="${m.archivo_url || '#'}">Descargar E-book</a></p>
               </object>
             ` : m.tipo_contenido === 'VIDEO' ? `
-              <iframe width="100%" height="100%" src="https://www.youtube.com/embed/QHQg1u68yYc?rel=0" frameborder="0" allowfullscreen></iframe>
+              <video width="100%" height="100%" controls style="background:#000">
+                <source src="${m.archivo_url || ''}" type="video/mp4">
+                Tu navegador no soporta el tag de video.
+              </video>
             ` : m.tipo_contenido === 'PPTX' ? `
-              <iframe src="https://docs.google.com/presentation/d/e/2PACX-1vT1oXfH-H3I-_38GIfc5Q8nOh8_F8E-eO-0Kk_QyFwR3C-c94uX1A7/embed?start=false&loop=false&delayms=3000" frameborder="0" width="100%" height="100%" allowfullscreen="true" mozallowfullscreen="true" webkitallowfullscreen="true"></iframe>
+              <iframe src="https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(m.archivo_url || '')}" frameborder="0" width="100%" height="100%" allowfullscreen="true"></iframe>
             ` : `
               <div class="rich-text-viewer" style="background:#fff; padding:40px; color:#333; height:100%; overflow-y:auto; text-align:left;">
                 <h1 style="font-size:28px; margin-bottom:16px;">${m.titulo}</h1>
@@ -273,35 +276,90 @@ function showCreateModuleModal() {
     </div>
     
     <div class="form-group">
-      <label class="form-label">Archivo</label>
-      <div class="upload-zone" onclick="Toast.show('Upload', 'Funcionalidad de carga disponible con Supabase Storage.', 'info')">
-        <div class="upload-zone-icon">${icon('upload', 24)}</div>
-        <div class="upload-zone-title">Arrastrá un archivo o hacé clic para seleccionar</div>
-        <div class="upload-zone-text">PDF, PPTX, MP4 — Máximo 50 MB</div>
+      <label class="form-label">Archivo de Material</label>
+      <div class="upload-zone" id="module-upload-zone" onclick="document.getElementById('new-module-file').click()">
+        <input type="file" id="new-module-file" style="display:none" onchange="handleNewModuleFileSelect(event)">
+        <div id="upload-idle-state">
+          <div class="upload-zone-icon">${icon('upload', 24)}</div>
+          <div class="upload-zone-title">Hacé clic para seleccionar PDF, Video o PPTX</div>
+          <div class="upload-zone-text">Tamaño máximo recomendado: 50 MB</div>
+        </div>
+        <div id="upload-progress-state" class="hidden text-center">
+          <div class="spinner spinner-sm m-auto mb-2"></div>
+          <div class="text-xs font-bold text-primary">Subiendo archivo a la nube...</div>
+          <div class="text-[10px] text-tertiary mt-1">Esto puede tardar unos segundos dependiendo del tamaño.</div>
+        </div>
+        <div id="upload-success-state" class="hidden text-center">
+          <div class="text-success text-lg mb-1">✅</div>
+          <div class="text-xs font-bold text-success">Archivo listo para vincular</div>
+          <div id="uploaded-filename" class="text-[10px] text-tertiary mt-1"></div>
+        </div>
       </div>
+      <input type="hidden" id="new-module-file-url">
     </div>
-  `, () => {
+  `, async () => {
     
     const titulo = document.getElementById('new-module-title').value || 'Sin título';
     const desc = document.getElementById('new-module-desc').value || '';
     const contenido = document.getElementById('new-module-content').value || '';
     const tipo = document.getElementById('new-module-type').value || 'TEXT';
+    const fileUrl = document.getElementById('new-module-file-url').value;
     
-    Store.modules.push({
+    const newModule = {
       id: 'mod_' + Date.now(),
       titulo: titulo,
       descripcion: desc,
       nivel_objetivo: 1,
       estado: 'borrador',
       tipo_contenido: tipo,
-      contenido_texto: contenido
-    });
-    Store.saveToStorage();
+      contenido_texto: contenido,
+      archivo_url: fileUrl || null,
+      created_at: new Date().toISOString(),
+      progress: 0
+    };
 
-    Toast.show('Módulo creado', 'El nuevo módulo fue guardado como borrador.', 'success');
+    Store.modules.push(newModule);
+    
+    // Persistir en Supabase si está disponible
+    if (window.db) {
+      Store.persist('modules', newModule);
+    }
+
+    Store.saveToStorage();
+    Toast.show('Módulo creado', 'El nuevo módulo fue guardado y el material vinculado.', 'success');
     closeModal();
     Router.render('elearning');
   }, 'Crear Módulo');
+}
+
+let selectedModuleFile = null;
+
+async function handleNewModuleFileSelect(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  selectedModuleFile = file;
+  const idle = document.getElementById('upload-idle-state');
+  const progress = document.getElementById('upload-progress-state');
+  const success = document.getElementById('upload-success-state');
+  const filename = document.getElementById('uploaded-filename');
+  const urlInput = document.getElementById('new-module-file-url');
+
+  idle.classList.add('hidden');
+  progress.classList.remove('hidden');
+
+  const publicUrl = await FileUploader.upload(file, `modules/${file.name.replace(/\s+/g, '_')}`);
+
+  progress.classList.add('hidden');
+  if (publicUrl) {
+    success.classList.remove('hidden');
+    filename.textContent = file.name;
+    urlInput.value = publicUrl;
+    Toast.show('Archivo Cargado', 'El material se subió correctamente a la nube.', 'success');
+  } else {
+    idle.classList.remove('hidden');
+    Toast.show('Error', 'No se pudo subir el archivo. Intenta de nuevo.', 'danger');
+  }
 }
 
 function downloadEbook(titulo) {
